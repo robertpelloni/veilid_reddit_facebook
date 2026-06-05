@@ -1,0 +1,16 @@
+{
+  "testnet_version": "1.1.0-testnet",
+  "protocol_string": "veilid-reddit-myspace-v1-testnet",
+  "bootstrap_nodes": [
+    "142.250.190.46:5959",
+    "172.217.1.14:5959"
+  ],
+  "capabilities": [
+    "sovereign_identity",
+    "myspace_personalization",
+    "p2p_messaging",
+    "quadratic_voting",
+    "liquid_delegation"
+  ],
+  "release_date": "2026-06-05"
+}

@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## [1.1.0-testnet] - 2026-06-05
+### Added
+- **Testnet Release**: Launched the public P2P testnet environment.
+- **Feedback Loop**: Established `FEEDBACK.md` and P2P feedback forms for community verification.
+- **Deployment Manifest**: Created `TESTNET_MANIFEST.json` for automated node configuration.
+
 ## [1.1.0] - 2026-06-05
 ### Added
 - **DAO Integration**: Full governance engine ported to native Go core, featuring Quadratic Voting and Liquid Delegation.
