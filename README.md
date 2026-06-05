@@ -34,9 +34,8 @@ The application uses a modular, multi-process architecture designed for security
 The project supports several deployment targets depending on your environment:
 
 - **Local Development:** Ideal for UI work and local testing. Follow the [Quick Start](#🛠️-quick-start) below.
-- **Staging Environment:** For team-wide integration testing on a private P2P subset. See [STAGING.md](STAGING.md).
-- **Public Testnet:** For verifying P2P propagation over the public internet. See [TESTNET.md](TESTNET.md).
-- **Production:** Hardened builds for public release. See [DEPLOY.md](DEPLOY.md).
+- **Staging & Testnet:** For multi-node verification and public P2P testing. See [STAGING.md](STAGING.md) and [TESTNET.md](TESTNET.md).
+- **Production Deployment:** Hardened release builds for public distribution. See [DEPLOY.md](DEPLOY.md).
 
 The CI/CD pipeline (GitHub Actions) automatically handles multi-platform builds and releases. Refer to the [CI/CD Pipeline](DEPLOY.md#cicd-pipeline) documentation for details.
 

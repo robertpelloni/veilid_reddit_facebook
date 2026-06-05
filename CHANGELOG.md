@@ -3,6 +3,8 @@
 ## [1.1.0] - 2026-06-05
 ### Added
 - **DAO Integration**: Full governance engine ported to native Go core, featuring Quadratic Voting and Liquid Delegation.
+- **Decentralized Comments**: Implemented a multi-writer DHT comment system for Home Feed posts.
+- **Storage Portability**: Added platform-specific data directory resolution for persistent P2P storage.
 - **Unified Monorepo**: Consolidated all submodules into the main repository for improved build atomicity and simplified CI/CD.
 - **Enhanced P2P Discovery**: Robust DHT-based identity registration for DAO participants.
 
