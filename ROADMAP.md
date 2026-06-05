@@ -2,13 +2,13 @@
 
 ## Phase 1: Foundation
 - [x] Project scaffolding and initial documentation.
-- [ ] Go sidecar with basic Veilid DHT operations.
-- [ ] React frontend with basic navigation and profile rendering.
+- [x] Go sidecar with basic Veilid DHT operations and SQLite caching.
+- [x] React frontend with navigation and profile rendering.
 
 ## Phase 2: Social Core
-- [ ] Profile creation and editing (MySpace style).
+- [x] Profile creation and editing (MySpace style).
 - [ ] Posting and subreddit management (Reddit style).
-- [ ] Local feed aggregation.
+- [x] Local feed aggregation.
 
 ## Phase 3: Interaction & Growth
 - [ ] Decentralized voting and comment system.

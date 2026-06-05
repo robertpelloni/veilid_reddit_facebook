@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import { ProfileContainer } from './components/ProfileContainer';
+import { ProfileEditor } from './components/ProfileEditor';
 import { FeedAggregator } from './services/aggregator';
 
 const aggregator = new FeedAggregator();
@@ -11,13 +12,38 @@ const App = () => {
   const [newKey, setNewKey] = useState('');
   const [feedback, setFeedback] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState('');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [myDhtKey, setMyDhtKey] = useState<string | null>(null);
+
+  const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>({
+    css: `body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`,
+    html: `<h1>Bob's Sovereign Profile</h1><p>I own my data. No central server. No trackers. Just P2P.</p><div style="background: #f6f7f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd;"><strong>Current Status:</strong> Building the decentralized future.</div>`
+  });
 
   useEffect(() => {
     aggregator.fetchFeed().then(setFeed);
+    const savedKey = localStorage.getItem('my_dht_key');
+    if (savedKey) setMyDhtKey(savedKey);
   }, []);
 
-  const handleSubscribe = () => {
+  const handleSubscribe = async () => {
     aggregator.subscribe(newKey);
+    // Attempt to fetch and view the profile of the key we just subscribed to
+    try {
+      setFeedbackStatus('Fetching profile...');
+      const response = await fetch(`http://127.0.0.1:1337/fetch?key=${newKey}`);
+      if (!response.ok) throw new Error('Fetch failed');
+      const data = await response.json();
+
+      setViewingProfile({
+        css: data.myspace_schema.theme_css_base64,
+        html: data.myspace_schema.html_content || `<h1>Profile for ${data.username}</h1>`
+      });
+      setFeedbackStatus('Showing profile for: ' + newKey);
+      setTimeout(() => setFeedbackStatus(''), 3000);
+    } catch (e) {
+      setFeedbackStatus('Failed to fetch profile (is sidecar running?)');
+    }
     setNewKey('');
     aggregator.fetchFeed().then(setFeed);
   };
@@ -29,83 +55,128 @@ const App = () => {
     setTimeout(() => setFeedbackStatus(''), 3000);
   };
 
+  const handleSaveProfile = async (username: string, css: string, html: string) => {
+    setIsSavingProfile(true);
+    console.log('Publishing profile for:', username);
+    try {
+      const response = await fetch('http://127.0.0.1:1337/publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username,
+          myspace_schema: {
+            theme_css_base64: css,
+            html_content: html // Adjusting schema slightly for prototype
+          }
+        })
+      });
+      if (!response.ok) throw new Error('Publish failed');
+      const data = await response.json();
+      setMyDhtKey(data.dht_key);
+      localStorage.setItem('my_dht_key', data.dht_key);
+      setViewingProfile({ css, html });
+      setFeedbackStatus('Profile published to Veilid!');
+      setTimeout(() => setFeedbackStatus(''), 3000);
+    } catch (e) {
+      setFeedbackStatus('Failed to publish profile (is the sidecar running?)');
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
   return (
-    <div className="p-8 max-w-4xl mx-auto font-sans bg-white min-h-screen">
-      <header className="mb-10 border-b pb-6">
-        <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Veilid Reddit MySpace</h1>
-        <p className="text-gray-600 mt-2">Decentralized, Serverless, Sovereign Social Fabric</p>
+    <div className="p-8 max-w-6xl mx-auto font-sans bg-gray-50 min-h-screen">
+      <header className="mb-10 border-b pb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Veilid Reddit MySpace</h1>
+          <p className="text-gray-600 mt-2">Decentralized, Serverless, Sovereign Social Fabric</p>
+        </div>
+        {myDhtKey && (
+          <div className="text-right">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Your Identity Key</span>
+            <p className="text-sm font-mono text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">{myDhtKey}</p>
+          </div>
+        )}
       </header>
 
-      <main className="grid grid-cols-1 md:grid-cols-3 gap-10">
-        <div className="md:col-span-2 space-y-10">
+      <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-8 space-y-10">
           <section>
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Your Home Feed</h2>
-            <div className="space-y-4">
-              {feed.length > 0 ? feed.map(post => (
-                <div key={post.post_id} className="p-5 border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all bg-white">
-                  <h3 className="text-xl font-bold text-blue-600 hover:underline cursor-pointer">{post.title}</h3>
-                  <p className="text-sm text-gray-500 mt-2">By: <span className="font-mono">{post.author_id}</span> • {new Date(post.timestamp).toLocaleString()}</p>
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">Sovereign Profile Preview</h2>
+            <div className="border rounded-2xl overflow-hidden shadow-xl bg-white aspect-video lg:aspect-auto lg:h-[500px]">
+              {viewingProfile ? (
+                <ProfileContainer
+                  cssStyles={viewingProfile.css}
+                  htmlContent={viewingProfile.html}
+                />
+              ) : (
+                <div className="h-full flex items-center justify-center text-gray-400 italic">
+                  Publish a profile to see it here
                 </div>
-              )) : (
-                <p className="text-gray-500 italic">Your feed is empty. Subscribe to some keys!</p>
               )}
             </div>
           </section>
 
-          <section>
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Profile Preview</h2>
-            <div className="border rounded-xl overflow-hidden shadow-inner bg-gray-50">
-              <ProfileContainer
-                cssStyles={`body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`}
-                htmlContent={`<h1>Bob's Sovereign Profile</h1><p>I own my data. No central server. No trackers. Just P2P.</p><div style="background: #f6f7f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd;"><strong>Current Status:</strong> Building the decentralized future.</div>`}
-              />
-            </div>
-          </section>
+          <ProfileEditor onSave={handleSaveProfile} isSaving={isSavingProfile} />
         </div>
 
-        <aside className="space-y-8">
-          <section className="p-6 bg-blue-50 rounded-2xl border border-blue-100">
-            <h2 className="text-lg font-bold mb-3 text-blue-900">Subscribe</h2>
+        <aside className="lg:col-span-4 space-y-8">
+          <section className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Your Home Feed</h2>
+            <div className="space-y-4">
+              {feed.length > 0 ? feed.map(post => (
+                <div key={post.post_id} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all">
+                  <h3 className="font-bold text-blue-600 hover:underline cursor-pointer text-sm">{post.title}</h3>
+                  <p className="text-[10px] text-gray-400 mt-1">By: <span className="font-mono">{post.author_id.substring(0, 12)}...</span></p>
+                </div>
+              )) : (
+                <p className="text-gray-400 italic text-sm">Your feed is empty.</p>
+              )}
+            </div>
+          </section>
+
+          <section className="p-6 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-200">
+            <h2 className="text-lg font-bold mb-3">Join Subreddit</h2>
             <div className="space-y-3">
               <input
                 type="text"
                 value={newKey}
                 onChange={(e) => setNewKey(e.target.value)}
-                placeholder="Veilid DHT Key"
-                className="w-full p-3 border border-blue-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                placeholder="Paste DHT Key..."
+                className="w-full p-3 bg-blue-500 border border-blue-400 rounded-lg placeholder-blue-200 outline-none text-sm"
               />
               <button
                 onClick={handleSubscribe}
-                className="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 active:transform active:scale-95 transition-all shadow-lg shadow-blue-200"
+                className="w-full py-3 bg-white text-blue-600 font-bold rounded-lg hover:bg-blue-50 transition-all shadow-md"
               >
-                Join Subreddit
+                Subscribe
               </button>
             </div>
           </section>
 
-          <section className="p-6 bg-gray-50 rounded-2xl border border-gray-200">
-            <h2 className="text-lg font-bold mb-3 text-gray-800">Submit Feedback</h2>
+          <section className="p-6 bg-gray-800 rounded-2xl text-gray-100 shadow-sm">
+            <h2 className="text-lg font-bold mb-3">Feedback</h2>
             <div className="space-y-3">
               <textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                placeholder="What do you think?"
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 outline-none transition-all text-sm h-32 resize-none"
+                placeholder="Suggestions?"
+                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg outline-none text-sm h-24 resize-none"
               />
               <button
                 onClick={handleFeedbackSubmit}
-                className="w-full py-3 bg-gray-800 text-white font-bold rounded-lg hover:bg-gray-900 active:transform active:scale-95 transition-all"
+                className="w-full py-2 bg-gray-100 text-gray-900 font-bold rounded-lg hover:bg-white transition-all"
               >
-                Send Feedback
+                Submit
               </button>
-              {feedbackStatus && <p className="text-xs text-green-600 font-medium text-center">{feedbackStatus}</p>}
+              {feedbackStatus && <p className="text-[10px] text-green-400 font-medium text-center">{feedbackStatus}</p>}
             </div>
           </section>
         </aside>
       </main>
 
-      <footer className="mt-20 border-t pt-8 text-center text-gray-400 text-sm">
-        <p>© 2024 Veilid Reddit MySpace • Built on Autopilot</p>
+      <footer className="mt-20 border-t pt-8 text-center text-gray-400 text-xs">
+        <p>© 2024 Veilid Reddit MySpace • The P2P Revolution is Here</p>
       </footer>
     </div>
   );

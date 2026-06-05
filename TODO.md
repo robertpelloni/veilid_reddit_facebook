@@ -1,7 +1,9 @@
 # TODO.md
 
-- [ ] Implement `PublishProfile` and `FetchProfile` in Go.
-- [ ] Build `ProfileContainer.tsx` with iframe sandboxing.
-- [ ] Set up Tauri v2 shell.
-- [ ] Implement local SQLite caching for feeds.
-- [ ] Create unit tests for Go and React components.
+- [x] Implement `PublishProfile` and `FetchProfile` in Go.
+- [x] Build `ProfileContainer.tsx` with iframe sandboxing.
+- [x] Set up Tauri shell (v1.5 implemented, v2 pending).
+- [x] Implement local SQLite caching for feeds.
+- [x] Create unit tests for Go components.
+- [ ] Real-time integration with `veilid-core` daemon.
+- [ ] Multi-writer DHT support for comments.

@@ -5,10 +5,12 @@ In this session, we expanded the initial scaffold into a more functional prototy
 
 ### Major Achievements
 - **Storage Layer:** Implemented SQLite caching in the Go sidecar (`src-tauri/background/storage/sqlite.go`) to store profiles and posts locally for performance.
+- **Go Sidecar API:** Extended `main.go` with `/publish` and `/fetch` endpoints to bridge the P2P layer and the storage layer.
 - **Frontend Enhancements:**
     - Developed a `FeedAggregator` service in TypeScript to handle subscriptions and feed composition.
     - Revamped the UI with a modern, responsive layout using Tailwind CSS.
     - Added a Home Feed display and a Subreddit subscription mechanism.
+    - Implemented a **Profile Editor** for user-generated sovereign profiles.
     - Implemented a Feedback submission UI component.
 - **Documentation:** Updated `DEPLOY.md` with instructions for test network deployment.
 - **Security:** Re-verified the sandboxed iframe rendering for user-generated content.
