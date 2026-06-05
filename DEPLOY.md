@@ -21,16 +21,24 @@
    npm run tauri dev
    ```
 
-## Test Network Deployment
-To deploy and test on a network of nodes:
-1. **Configure Veilid:** Ensure each node has a unique `veilid-core` configuration and can discover other nodes (via bootstrap nodes or local discovery).
-2. **Build All:** Run the automated build script:
-   ```bash
-   ./build-all.sh
-   ```
-3. **Distribute Binaries:** Distribute the built sidecar and Tauri app to your test nodes.
-4. **Discovery:** Use the built-in "Discovery Hub" to find other active profiles on the network.
-5. **Monitoring:** View the "Network Status" indicator in the app header for real-time peer count.
+## Test Network Deployment (UAT)
+To deploy and test on a network of nodes for User Acceptance Testing:
+
+### 1. Multi-Node Local Setup
+For testing on a single machine with multiple "nodes":
+1.  **Clone with Isolation:** Copy the repository into separate directories (e.g., `node1/`, `node2/`).
+2.  **Unique Veilid Configs:** Each directory must have a unique `veilid-core` config pointing to different local ports and storage paths.
+3.  **Sidecar Port Offsets:** If running multiple sidecars, modify the `DefaultSidecarPort` in `src-tauri/background/main.go` for each node to prevent port collisions.
+4.  **Run:** Start each node's sidecar and frontend independently.
+
+### 2. Physical Network Setup
+1.  **Build All:** Run the automated build script on your build machine:
+    ```bash
+    ./build-all.sh
+    ```
+2.  **Distribute Binaries:** Distribute the generated sidecar (from `src-tauri/bin/`) and the Tauri bundle to the test devices.
+3.  **Bootstrap:** Ensure at least one node is configured as a "bootstrap node" with a static IP or reachable DHT key so others can join the network.
+4.  **UAT Scenarios:** Execute the test cases defined in `UAT.md`.
 
 ## Production Deployment
 

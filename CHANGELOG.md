@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## [0.6.0] - 2026-06-05
+### Added
+- **UAT Infrastructure**: Created `UAT.md` defining test scenarios and acceptance criteria for final user verification.
+- **UAT Deployment Guide**: Added multi-node local and physical network setup instructions to `DEPLOY.md`.
+
+### Fixed
+- Resolved TypeScript errors in test files that prevented production builds.
+- Refined aggregator logic to handle empty profile metadata gracefully.
+
 ## [0.5.0] - 2026-06-05
 ### Added
 - **Automated Testing Suite**: Integrated GitHub Actions workflow (`.github/workflows/test.yml`) for continuous integration of Go and React code.
