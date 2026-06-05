@@ -60,7 +60,13 @@ npm run tauri build
 
 ## CI/CD Pipeline
 
-The project includes an automated deployment pipeline using GitHub Actions.
+The project includes a comprehensive automated pipeline for testing and deployment using GitHub Actions.
+
+### Automated Testing
+Every push and pull request to the `main` branch triggers the **Test Suite** workflow:
+1. **Backend Tests:** Executes all Go unit and integration tests for the sidecar service.
+2. **Frontend Tests:** Executes all Vitest component tests for the React application.
+Ensuring all tests pass is a prerequisite for merging and deployment.
 
 ### Automated Releases
 Whenever a new tag matching `v*` is pushed to the repository, the `Release` workflow is triggered:

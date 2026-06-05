@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## [0.5.0] - 2026-06-05
+### Added
+- **Automated Testing Suite**: Integrated GitHub Actions workflow (`.github/workflows/test.yml`) for continuous integration of Go and React code.
+- **CI Documentation**: Updated `DEPLOY.md` with detailed information on the automated testing pipeline.
+
 ## [0.4.0] - 2026-06-05
 ### Added
 - **Real-time Messaging**: Implemented P2P messaging using Veilid `AppMessage` protocol.
