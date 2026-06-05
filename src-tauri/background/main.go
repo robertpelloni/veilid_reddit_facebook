@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/client"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/schema"
@@ -21,7 +23,13 @@ type AppState struct {
 func main() {
 	fmt.Println("Veilid Sidecar Starting...")
 
-	dbPath := "veilid_cache.db"
+	var dataDir string
+	flag.StringVar(&dataDir, "data-dir", ".", "Directory for SQLite database and cache")
+	flag.Parse()
+
+	dbPath := filepath.Join(dataDir, "veilid_cache.db")
+	fmt.Printf("Using database at: %s\n", dbPath)
+
 	s, err := storage.NewSQLiteStorage(dbPath)
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
@@ -46,6 +54,8 @@ func main() {
 	mux.HandleFunc("/message/inbox", state.handleGetInbox)
 	mux.HandleFunc("/dao/proposals", state.handleDAOProposals)
 	mux.HandleFunc("/dao/vote", state.handleDAOVote)
+	mux.HandleFunc("/comments/add", state.handleAddComment)
+	mux.HandleFunc("/comments/list", state.handleListComments)
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -228,6 +238,48 @@ func (s *AppState) handleDAOProposals(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(proposals)
+}
+
+func (s *AppState) handleAddComment(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var c schema.Comment
+	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.Veilid.PublishComment(c); err != nil {
+		// Proceed in prototype
+	}
+
+	if err := s.Storage.SaveComment(&c); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "added"})
+}
+
+func (s *AppState) handleListComments(w http.ResponseWriter, r *http.Request) {
+	postID := r.URL.Query().Get("post_id")
+	if postID == "" {
+		http.Error(w, "Missing post_id", http.StatusBadRequest)
+		return
+	}
+
+	comments, err := s.Storage.GetComments(postID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(comments)
 }
 
 func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {

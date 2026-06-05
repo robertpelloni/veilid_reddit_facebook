@@ -42,6 +42,7 @@ jobs:
         shell: bash
         run: |
           TARGET_TRIPLE=$(rustc -Vv | grep host | cut -d ' ' -f 2)
+          # Tauri v1 expects sidecar in src-tauri/bin/ and registered as "sidecar" in tauri.conf.json
           mkdir -p src-tauri/bin
           go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
           if [ "${{ matrix.platform }}" == "windows-latest" ]; then
@@ -53,8 +54,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__ # tauri-action replaces this with the actual tag
-          releaseName: 'Veilid Reddit MySpace v__VERSION__'
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Veilid Reddit MySpace ${{ github.ref_name }}'
           releaseBody: 'See CHANGELOG.md for details.'
           releaseDraft: true
           prerelease: false

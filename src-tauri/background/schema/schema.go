@@ -56,3 +56,13 @@ type DAOVote struct {
 	Weight     float64 `json:"weight"`
 	Signature  string  `json:"signature"`
 }
+
+// Comment represents a decentralized comment on a post.
+type Comment struct {
+	ID        string    `json:"id"`
+	PostID    string    `json:"post_id"`
+	AuthorID  string    `json:"author_id"`
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
+	Signature string    `json:"signature,omitempty"`
+}

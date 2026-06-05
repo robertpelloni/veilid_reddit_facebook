@@ -7,6 +7,7 @@ import { NetworkStatus } from './components/NetworkStatus';
 import { FeedAggregator } from './services/aggregator';
 import { DAOProposalList, DAOProposal } from './components/DAO/DAOProposalList';
 import { DAOProposalForm } from './components/DAO/DAOProposalForm';
+import { CommentThread } from './components/CommentThread';
 import { Gavel, Plus } from 'lucide-react';
 
 const aggregator = new FeedAggregator();
@@ -227,6 +228,8 @@ const App = () => {
                 <div key={post.post_id} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all">
                   <h3 className="font-bold text-blue-600 hover:underline cursor-pointer text-sm">{post.title}</h3>
                   <p className="text-[10px] text-gray-400 mt-1">By: <span className="font-mono">{post.author_id.substring(0, 12)}...</span></p>
+
+                  <CommentThread postId={post.post_id} myId={myDhtKey || 'anonymous'} />
                 </div>
               )) : (
                 <p className="text-gray-400 italic text-sm">Your feed is empty.</p>

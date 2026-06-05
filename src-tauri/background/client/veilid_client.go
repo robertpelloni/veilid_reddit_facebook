@@ -159,3 +159,21 @@ func (c *VeilidClient) CastDAOVoteP2P(v schema.DAOVote) error {
 	})
 	return err
 }
+
+func (c *VeilidClient) PublishComment(cmt schema.Comment) error {
+	data, _ := json.Marshal(cmt)
+	// Multi-writer DHT simulation: every post has a target key for comments
+	_, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
+		"value": data,
+	})
+	if err != nil {
+		fmt.Printf("Simulated comment publish for post %s\n", cmt.PostID)
+		return nil
+	}
+	return nil
+}
+
+func (c *VeilidClient) GetCommentsP2P(postID string) ([]schema.Comment, error) {
+	// In a real multi-writer DHT, we would fetch and merge signed records
+	return []schema.Comment{}, nil
+}

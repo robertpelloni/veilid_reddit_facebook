@@ -150,4 +150,34 @@ func TestIntegrationAPI(t *testing.T) {
 			t.Errorf("Get inbox failed: %d", rr.Code)
 		}
 	})
+
+	t.Run("Comments API", func(t *testing.T) {
+		comment := schema.Comment{
+			ID:      "cmt1",
+			PostID:  "post123",
+			Content: "This is a P2P comment",
+		}
+		body, _ := json.Marshal(comment)
+		req := httptest.NewRequest("POST", "/comments/add", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		state.handleAddComment(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("Add comment failed: %d", rr.Code)
+		}
+
+		req = httptest.NewRequest("GET", "/comments/list?post_id=post123", nil)
+		rr = httptest.NewRecorder()
+		state.handleListComments(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("List comments failed: %d", rr.Code)
+		}
+
+		var results []schema.Comment
+		json.Unmarshal(rr.Body.Bytes(), &results)
+		if len(results) == 0 {
+			t.Error("List comments returned 0 results")
+		}
+	})
 }

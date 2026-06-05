@@ -73,6 +73,13 @@ func (s *SQLiteStorage) initSchema() error {
 			subject TEXT,
 			PRIMARY KEY (delegator_id, subject)
 		);
+		CREATE TABLE IF NOT EXISTS comments (
+			id TEXT PRIMARY KEY,
+			post_id TEXT,
+			author_id TEXT,
+			content TEXT,
+			timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);
 	`)
 	return err
 }
@@ -159,6 +166,32 @@ func (s *SQLiteStorage) GetDAOProposals() ([]*schema.DAOProposal, error) {
 		proposals = append(proposals, p)
 	}
 	return proposals, nil
+}
+
+func (s *SQLiteStorage) SaveComment(c *schema.Comment) error {
+	_, err := s.db.Exec(`
+		INSERT OR REPLACE INTO comments (id, post_id, author_id, content, timestamp)
+		VALUES (?, ?, ?, ?, ?)
+	`, c.ID, c.PostID, c.AuthorID, c.Content, c.Timestamp)
+	return err
+}
+
+func (s *SQLiteStorage) GetComments(postID string) ([]*schema.Comment, error) {
+	rows, err := s.db.Query("SELECT id, post_id, author_id, content, timestamp FROM comments WHERE post_id = ? ORDER BY timestamp ASC", postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []*schema.Comment
+	for rows.Next() {
+		c := &schema.Comment{}
+		if err := rows.Scan(&c.ID, &c.PostID, &c.AuthorID, &c.Content, &c.Timestamp); err != nil {
+			return nil, err
+		}
+		comments = append(comments, c)
+	}
+	return comments, nil
 }
 
 func (s *SQLiteStorage) CastDAOVote(v *schema.DAOVote) error {
