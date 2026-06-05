@@ -37,6 +37,9 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/publish", state.handlePublish)
 	mux.HandleFunc("/fetch", state.handleFetch)
+	mux.HandleFunc("/register", state.handleRegister)
+	mux.HandleFunc("/discovery", state.handleDiscovery)
+	mux.HandleFunc("/status", state.handleStatus)
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -114,4 +117,51 @@ func (s *AppState) handleFetch(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(profile)
+}
+
+func (s *AppState) handleRegister(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		DHTKey   string `json:"dht_key"`
+		Username string `json:"username"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.Storage.RegisterKey(req.DHTKey, req.Username); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"status": "registered"})
+}
+
+func (s *AppState) handleDiscovery(w http.ResponseWriter, r *http.Request) {
+	keys, err := s.Storage.GetRegisteredKeys()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(keys)
+}
+
+func (s *AppState) handleStatus(w http.ResponseWriter, r *http.Request) {
+	// Mocking network status
+	status := map[string]interface{}{
+		"connected_peers": 42,
+		"node_id":         "vld_node_88888888",
+		"dht_size":        123456,
+		"protocol":        "Veilid v0.1.0",
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(status)
 }

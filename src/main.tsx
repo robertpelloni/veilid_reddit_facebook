@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import { ProfileContainer } from './components/ProfileContainer';
 import { ProfileEditor } from './components/ProfileEditor';
+import { NetworkStatus } from './components/NetworkStatus';
 import { FeedAggregator } from './services/aggregator';
 
 const aggregator = new FeedAggregator();
@@ -14,16 +15,25 @@ const App = () => {
   const [feedbackStatus, setFeedbackStatus] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [myDhtKey, setMyDhtKey] = useState<string | null>(null);
+  const [discoveredKeys, setDiscoveredKeys] = useState<any[]>([]);
 
   const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>({
     css: `body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`,
     html: `<h1>Bob's Sovereign Profile</h1><p>I own my data. No central server. No trackers. Just P2P.</p><div style="background: #f6f7f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd;"><strong>Current Status:</strong> Building the decentralized future.</div>`
   });
 
+  const fetchDiscovery = async () => {
+    try {
+      const resp = await fetch('http://127.0.0.1:1337/discovery');
+      if (resp.ok) setDiscoveredKeys(await resp.ok ? await resp.json() : []);
+    } catch (e) { console.error(e); }
+  };
+
   useEffect(() => {
     aggregator.fetchFeed().then(setFeed);
     const savedKey = localStorage.getItem('my_dht_key');
     if (savedKey) setMyDhtKey(savedKey);
+    fetchDiscovery();
   }, []);
 
   const handleSubscribe = async () => {
@@ -74,6 +84,14 @@ const App = () => {
       const data = await response.json();
       setMyDhtKey(data.dht_key);
       localStorage.setItem('my_dht_key', data.dht_key);
+
+      // Automatically register for discovery
+      await fetch('http://127.0.0.1:1337/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dht_key: data.dht_key, username })
+      });
+      fetchDiscovery();
       setViewingProfile({ css, html });
       setFeedbackStatus('Profile published to Veilid!');
       setTimeout(() => setFeedbackStatus(''), 3000);
@@ -89,7 +107,10 @@ const App = () => {
       <header className="mb-10 border-b pb-6 flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Veilid Reddit MySpace</h1>
-          <p className="text-gray-600 mt-2">Decentralized, Serverless, Sovereign Social Fabric</p>
+          <div className="flex items-center gap-4 mt-2">
+            <p className="text-gray-600">Decentralized, Serverless, Sovereign Social Fabric</p>
+            <NetworkStatus />
+          </div>
         </div>
         {myDhtKey && (
           <div className="text-right">
@@ -131,6 +152,28 @@ const App = () => {
                 </div>
               )) : (
                 <p className="text-gray-400 italic text-sm">Your feed is empty.</p>
+              )}
+            </div>
+          </section>
+
+          <section className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
+            <h2 className="text-xl font-bold mb-4 text-gray-800">Discover Profiles</h2>
+            <div className="space-y-3">
+              {discoveredKeys.length > 0 ? discoveredKeys.map(k => (
+                <div key={k.dht_key} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded-lg group">
+                  <div>
+                    <p className="font-bold text-sm text-gray-700">{k.username}</p>
+                    <p className="text-[10px] font-mono text-gray-400 truncate w-32">{k.dht_key}</p>
+                  </div>
+                  <button
+                    onClick={() => { setNewKey(k.dht_key); }}
+                    className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    Select
+                  </button>
+                </div>
+              )) : (
+                <p className="text-sm text-gray-400 italic">No profiles discovered yet.</p>
               )}
             </div>
           </section>

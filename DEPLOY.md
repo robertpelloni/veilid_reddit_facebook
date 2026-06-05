@@ -24,9 +24,13 @@
 ## Test Network Deployment
 To deploy and test on a network of nodes:
 1. **Configure Veilid:** Ensure each node has a unique `veilid-core` configuration and can discover other nodes (via bootstrap nodes or local discovery).
-2. **Distribute Binaries:** Build the Tauri application for each target platform (`npm run tauri build`).
-3. **Connect Nodes:** Share Veilid Crypto Routing IDs or DHT keys between nodes to test subscription and data replication.
-4. **Monitoring:** Use `veilid-cli` to inspect DHT states and network connectivity on each node.
+2. **Build All:** Run the automated build script:
+   ```bash
+   ./build-all.sh
+   ```
+3. **Distribute Binaries:** Distribute the built sidecar and Tauri app to your test nodes.
+4. **Discovery:** Use the built-in "Discovery Hub" to find other active profiles on the network.
+5. **Monitoring:** View the "Network Status" indicator in the app header for real-time peer count.
 
 ## Production
 (Coming soon - will involve bundled binaries and secure key management)

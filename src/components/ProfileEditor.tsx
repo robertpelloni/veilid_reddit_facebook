@@ -16,8 +16,9 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ onSave, isSaving }
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
+          <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">Username</label>
           <input
+            id="username"
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -27,8 +28,9 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ onSave, isSaving }
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Custom CSS</label>
+          <label htmlFor="css" className="block text-sm font-medium text-gray-700 mb-1">Custom CSS</label>
           <textarea
+            id="css"
             value={cssStyles}
             onChange={(e) => setCssStyles(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono text-xs h-32"
@@ -36,8 +38,9 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ onSave, isSaving }
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Custom HTML Content</label>
+          <label htmlFor="html" className="block text-sm font-medium text-gray-700 mb-1">Custom HTML Content</label>
           <textarea
+            id="html"
             value={htmlContent}
             onChange={(e) => setHtmlContent(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-mono text-xs h-32"

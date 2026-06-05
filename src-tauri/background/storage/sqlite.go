@@ -46,8 +46,39 @@ func (s *SQLiteStorage) initSchema() error {
 			timestamp TIMESTAMP,
 			subreddit_key TEXT
 		);
+		CREATE TABLE IF NOT EXISTS registry (
+			dht_key TEXT PRIMARY KEY,
+			username TEXT,
+			registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);
 	`)
 	return err
+}
+
+func (s *SQLiteStorage) RegisterKey(dhtKey string, username string) error {
+	_, err := s.db.Exec(`
+		INSERT OR REPLACE INTO registry (dht_key, username)
+		VALUES (?, ?)
+	`, dhtKey, username)
+	return err
+}
+
+func (s *SQLiteStorage) GetRegisteredKeys() ([]map[string]string, error) {
+	rows, err := s.db.Query("SELECT dht_key, username FROM registry ORDER BY registered_at DESC")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var keys []map[string]string
+	for rows.Next() {
+		var dhtKey, username string
+		if err := rows.Scan(&dhtKey, &username); err != nil {
+			return nil, err
+		}
+		keys = append(keys, map[string]string{"dht_key": dhtKey, "username": username})
+	}
+	return keys, nil
 }
 
 func (s *SQLiteStorage) SaveProfile(dhtKey string, profile *schema.ProfileRegistry) error {
