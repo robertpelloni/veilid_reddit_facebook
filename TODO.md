@@ -1,15 +1,15 @@
 # TODO.md
 
-## Critical Path
-- [ ] Bundle Go sidecar as a Tauri sidecar (config in `tauri.conf.json`).
-- [ ] Implement robust error handling for `veilid-core` disconnection.
-- [ ] Add "Export Identity" feature to backup Routing Pairs.
+## Post-1.0.0 Refinement
+- [ ] Refactor `src/main.tsx` into modular React hooks.
+- [ ] Add unit tests for `FeedAggregator` service.
+- [ ] Implement "Identity Export" UI for Routing Pair backup.
 
-## UI/UX
+## UI/UX Enhancements
 - [ ] Add more default MySpace-style themes.
-- [ ] Implement "Top 8" friends visualization.
-- [ ] Add media player component for profile background music.
+- [ ] Implement "Top 8" friends visualization component.
+- [ ] Integrated media player for profile background audio.
 
-## Testing
-- [ ] Add frontend integration tests using Playwright.
-- [ ] Implement stress tests for DHT aggregation.
+## Long-term Research
+- [ ] Explore CRDTs for collaborative subreddit editing.
+- [ ] Investigate WASM-based Veilid core for browser-only mode.

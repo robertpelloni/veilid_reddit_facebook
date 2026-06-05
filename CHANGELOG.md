@@ -1,13 +1,12 @@
 # CHANGELOG.md
 
-## [0.6.0] - 2026-06-05
+## [1.0.0] - 2026-06-05
 ### Added
-- **UAT Infrastructure**: Created `UAT.md` defining test scenarios and acceptance criteria for final user verification.
-- **UAT Deployment Guide**: Added multi-node local and physical network setup instructions to `DEPLOY.md`.
-
-### Fixed
-- Resolved TypeScript errors in test files that prevented production builds.
-- Refined aggregator logic to handle empty profile metadata gracefully.
+- **Production Baseline**: Finalized the serverless P2P architecture for public release.
+- **CI/CD Maturity**: Integrated automated testing and multi-platform release workflows.
+- **Unified Identity**: Stabilized the sovereign Routing Pair management and profile publication.
+- **Messaging Finalization**: Completed real-time P2P communication layer.
+- **Production Documentation**: Added comprehensive Deployment and User Manuals.
 
 ## [0.5.0] - 2026-06-05
 ### Added
