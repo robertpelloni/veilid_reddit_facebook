@@ -14,6 +14,7 @@ dist
 # Binaries
 bin/
 src-tauri/bin/
+src-tauri/target/
 
 # OS files
 .DS_Store

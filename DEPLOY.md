@@ -57,3 +57,23 @@ npm run tauri build
 ### 4. Infrastructure
 - **Bootstrap Nodes:** Deploy at least 3 stable "Seed Nodes" running `veilid-core` to facilitate network discovery.
 - **Discovery Hubs:** For a production "r/all" experience, maintain high-availability Discovery Hub nodes that aggregate signed profile announcements.
+
+## CI/CD Pipeline
+
+The project includes an automated deployment pipeline using GitHub Actions.
+
+### Automated Releases
+Whenever a new tag matching `v*` is pushed to the repository, the `Release` workflow is triggered:
+1. **Multi-platform Build:** It concurrently builds the application for macOS, Ubuntu, and Windows.
+2. **Go Sidecar Compilation:** It automatically compiles the Go backend for the target platform and architecture, ensuring the correct naming convention for Tauri.
+3. **Draft Release:** It creates a new GitHub Release with the bundled installers and sidecar binaries.
+
+### Triggering a Release
+To release a new version:
+1. Update `VERSION.md` and `CHANGELOG.md`.
+2. Commit and push your changes.
+3. Create and push a new git tag:
+   ```bash
+   git tag v0.3.0
+   git push origin v0.3.0
+   ```

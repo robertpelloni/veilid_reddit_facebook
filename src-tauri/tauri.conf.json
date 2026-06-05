@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "veilid-reddit-myspace",
-    "version": "0.1.0"
+    "version": "0.3.0"
   },
   "tauri": {
     "allowlist": {
@@ -21,7 +21,7 @@
         "depends": []
       },
       "externalBin": [
-        "bin/sidecar"
+        "sidecar"
       ],
       "icon": [
         "icons/32x32.png",
@@ -43,14 +43,13 @@
       "targets": "all",
       "windows": {
         "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampServer": ""
+        "digestAlgorithm": "sha256"
       }
     },
     "security": {
       "csp": null
     },
-    "window": [
+    "windows": [
       {
         "fullscreen": false,
         "height": 600,

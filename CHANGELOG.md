@@ -1,5 +1,14 @@
 # CHANGELOG.md
 
+## [0.3.0] - 2026-06-05
+### Added
+- **CI/CD Pipeline**: Integrated GitHub Actions workflow (`.github/workflows/release.yml`) for automated multi-platform builds.
+- **User Documentation**: Created a comprehensive `USER_MANUAL.md` for end-user guidance.
+- **Production Instructions**: Expanded `DEPLOY.md` with CI/CD and production hardening details.
+
+### Fixed
+- Standardized sidecar naming convention for Windows compatibility in CI.
+
 ## [0.2.0] - 2026-06-05
 ### Added
 - **Core Integration**: Go sidecar (`src-tauri/background`) implementing the Veilid JSON-RPC bridge and SQLite storage layer.
