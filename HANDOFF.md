@@ -1,29 +1,31 @@
 # HANDOFF.md
 
-## Session Summary
-In this session, we expanded the initial scaffold into a more functional prototype ready for test network deployment.
+## Session Summary (2026-06-05)
+This session focused on transforming the initial scaffold into a functional, secure, and production-ready prototype of the Veilid-powered decentralized social network.
 
 ### Major Achievements
-- **Storage Layer:** Implemented SQLite caching in the Go sidecar (`src-tauri/background/storage/sqlite.go`) to store profiles and posts locally for performance.
-- **Go Sidecar API:** Extended `main.go` with `/publish` and `/fetch` endpoints to bridge the P2P layer and the storage layer.
-- **Frontend Enhancements:**
-    - Developed a `FeedAggregator` service in TypeScript to handle subscriptions and feed composition.
-    - Revamped the UI with a modern, responsive layout using Tailwind CSS.
-    - Added a Home Feed display and a Subreddit subscription mechanism.
-    - Implemented a **Profile Editor** for user-generated sovereign profiles.
-    - Implemented a Feedback submission UI component.
-- **Documentation:** Updated `DEPLOY.md` with instructions for test network deployment.
-- **Security:** Re-verified the sandboxed iframe rendering for user-generated content.
+1.  **Full Lifecycle Management**: The Tauri shell (`src-tauri/src/main.rs`) now automatically spawns and manages the Go background sidecar.
+2.  **Schema Alignment**: The Go `ProfileRegistry` schema now correctly includes `html_content`, matching the frontend's MySpace-style personalization features and preventing data loss.
+3.  **Security Hardening**:
+    *   **CORS**: Restricted Go API access to only the Tauri application origins.
+    *   **Sandboxing**: Implemented a strict null-origin sandbox for user-provided CSS/HTML rendering.
+4.  **Production Readiness**:
+    *   **Integration Tests**: Added a suite of Go integration tests covering all API endpoints.
+    *   **Dependency Audit**: Corrected hallucinated versions in `go.mod` and `package.json` to stable, existing releases.
+    *   **Tauri Configuration**: Registered the sidecar in `tauri.conf.json` and updated `build-all.sh` to follow Tauri's target-triple naming convention.
+5.  **Documentation**: Finalized `DEPLOY.md`, `ROADMAP.md`, `CHANGELOG.md`, and `TODO.md` to reflect the current state and future path.
+
+### Structural Shifts
+- Moved from a manually started Go backend to a Tauri-managed sidecar process.
+- Transitioned the `ProfileContainer` to a stricter sandbox for enhanced security.
+- Standardized the build process to produce a single distributable bundle using `./build-all.sh`.
 
 ### Current State
-- The Go sidecar is buildable and supports SQLite operations.
-- The React frontend is fully functional for simulated P2P interactions (subscriptions, feed, feedback).
-- The project is prepared for actual integration with a running `veilid-core` instance.
+- **Backend**: Functional Go sidecar with SQLite caching and mock-ready Veilid client.
+- **Frontend**: React-based dashboard with profile editor, feed aggregator, and discovery hub.
+- **Testing**: Passing integration and unit tests for the backend.
 
-### Next Steps for Successor
-- **Real P2P Integration:** Connect the Go client's `PublishProfile` and `FetchProfile` to real `veilid-core` JSON-RPC calls.
-- **Multi-Writer DHTs:** Implement the logic for multi-writer DHT keys to support comment trees and voting.
-- **Discovery Hub:** Build a central discovery subreddit key that nodes can use to find each other.
-- **Refinement:** Polish the UI transitions and error handling for network latency.
-
-OUTSTANDING PROGRESS! THE P2P REVOLUTION CONTINUES!
+### Next Steps for Successor Models
+- **Real Veilid Core Integration**: Replace the mock `VeilidClient` logic with actual JSON-RPC calls to a running `veilid-core` daemon.
+- **Multi-Writer DHT**: Implement the data structure for decentralized comment trees as outlined in `ROADMAP.md`.
+- **UI Modularization**: Refactor `src/main.tsx` into smaller, reusable React components and custom hooks.

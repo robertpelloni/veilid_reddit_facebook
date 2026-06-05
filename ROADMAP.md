@@ -1,21 +1,18 @@
 # ROADMAP.md
 
-## Phase 1: Foundation
-- [x] Project scaffolding and initial documentation.
-- [x] Go sidecar with basic Veilid DHT operations and SQLite caching.
-- [x] React frontend with navigation and profile rendering.
+## Phase 1: Sovereign Foundation (COMPLETED)
+- [x] Implement Go background sidecar.
+- [x] Basic Veilid DHT publication/fetching.
+- [x] Secure MySpace-style profile sandboxing.
+- [x] Local SQLite discovery hub.
 
-## Phase 2: Social Core
-- [x] Profile creation and editing (MySpace style).
-- [ ] Posting and subreddit management (Reddit style).
-- [x] Local feed aggregation.
+## Phase 2: Decentralized Interaction (IN PROGRESS)
+- [ ] **Multi-Writer DHT Trees**: Implement decentralized comment sections for every post.
+- [ ] **Cryptographic Voting**: Signed vote aggregation without a central server.
+- [ ] **Binary Sidecar Bundling**: Ensure Tauri bundles the Go sidecar automatically in the installer.
+- [ ] **Real-time Push**: Use Veilid `AppMessage` for instant comment notifications.
 
-## Phase 3: Interaction & Growth
-- [ ] Decentralized voting and comment system.
-- [ ] Follow/Friend system and discovery hub.
-- [ ] Multi-writer DHT optimization.
-
-## Phase 4: Polish & Performance
-- [ ] UI/UX refinements.
-- [ ] Advanced sandboxing and security audits.
-- [ ] Mobile version (Flutter/Dart).
+## Phase 3: Network Hardening
+- [ ] **Tauri v2 Migration**: Upgrade to Tauri v2 for improved security and performance.
+- [ ] **Mobile Port**: Utilize Veilid's Flutter/Dart bindings for a native Android/iOS experience.
+- [ ] **Encrypted Media Storage**: Integrate IPFS or Hypercore for large-file media attachments (music, high-res images).

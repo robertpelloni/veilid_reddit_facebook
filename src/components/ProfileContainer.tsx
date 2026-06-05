@@ -33,7 +33,7 @@ export const ProfileContainer: React.FC<ProfileProps> = ({ cssStyles, htmlConten
     <iframe
       ref={iframeRef}
       className="w-full h-screen border-none"
-      sandbox="allow-same-origin"
+      sandbox=""
       title="Sovereign Subreddit Sandbox"
     />
   );

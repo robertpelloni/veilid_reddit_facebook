@@ -1,9 +1,15 @@
 # TODO.md
 
-- [x] Implement `PublishProfile` and `FetchProfile` in Go.
-- [x] Build `ProfileContainer.tsx` with iframe sandboxing.
-- [x] Set up Tauri shell (v1.5 implemented, v2 pending).
-- [x] Implement local SQLite caching for feeds.
-- [x] Create unit tests for Go components.
-- [ ] Real-time integration with `veilid-core` daemon.
-- [ ] Multi-writer DHT support for comments.
+## Critical Path
+- [ ] Bundle Go sidecar as a Tauri sidecar (config in `tauri.conf.json`).
+- [ ] Implement robust error handling for `veilid-core` disconnection.
+- [ ] Add "Export Identity" feature to backup Routing Pairs.
+
+## UI/UX
+- [ ] Add more default MySpace-style themes.
+- [ ] Implement "Top 8" friends visualization.
+- [ ] Add media player component for profile background music.
+
+## Testing
+- [ ] Add frontend integration tests using Playwright.
+- [ ] Implement stress tests for DHT aggregation.

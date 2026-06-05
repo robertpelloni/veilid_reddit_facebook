@@ -10,7 +10,6 @@ export class FeedAggregator {
   private subscribedKeys: string[] = [];
 
   constructor() {
-    // Load from local storage or SQLite cache
     const saved = localStorage.getItem('subscribed_keys');
     if (saved) {
       this.subscribedKeys = JSON.parse(saved);
@@ -25,25 +24,44 @@ export class FeedAggregator {
   }
 
   async fetchFeed(): Promise<PostHeader[]> {
-    // In a real app, this would call the Go sidecar to fetch from Veilid
-    console.log('Fetching feed for keys:', this.subscribedKeys);
+    console.log('Fetching aggregated feed for keys:', this.subscribedKeys);
 
-    // Mocking feed data
-    return [
-      {
-        post_id: '1',
-        author_id: 'alice_key',
-        title: 'Hello from Alice',
-        target_key: 'alice_post_1',
-        timestamp: new Date().toISOString()
-      },
-      {
-        post_id: '2',
-        author_id: 'bob_key',
-        title: 'Bobs updates',
-        target_key: 'bob_post_1',
-        timestamp: new Date(Date.now() - 3600000).toISOString()
-      }
-    ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    const allPosts: PostHeader[] = [];
+
+    // Aggregation Logic:
+    // In a production P2P network, we iterate through each subscribed user's
+    // subreddit_index key on Veilid DHT, pull their recent PostHeaders,
+    // and blend them into a single chronological timeline.
+
+    for (const key of this.subscribedKeys) {
+        try {
+            // Fetch the profile first to get the subreddit_index
+            const profileResp = await fetch(`http://127.0.0.1:1337/fetch?key=${key}`);
+            if (!profileResp.ok) continue;
+            const profile = await profileResp.json();
+
+            // For the prototype, we assume the sidecar provides
+            // the PostHeader array directly via the profile metadata
+            // or a dedicated /posts endpoint.
+            // Here we mock the result of a successful DHT crawl:
+            const userPosts: PostHeader[] = [
+                {
+                    post_id: `id_${key}_1`,
+                    author_id: key,
+                    title: `Sovereign Post from ${profile.username}`,
+                    target_key: `target_${key}`,
+                    timestamp: new Date(Date.now() - Math.random() * 10000000).toISOString()
+                }
+            ];
+            allPosts.push(...userPosts);
+        } catch (e) {
+            console.error(`Failed to aggregate from key ${key}:`, e);
+        }
+    }
+
+    // Sort by timestamp descending
+    return allPosts.sort((a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
   }
 }

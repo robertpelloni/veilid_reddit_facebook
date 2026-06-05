@@ -3,9 +3,12 @@
 
 set -e
 
-echo "--- Building Go Sidecar ---"
-mkdir -p bin
-go build -o bin/sidecar ./src-tauri/background/main.go
+# Detect target triple for Tauri sidecar naming
+TARGET_TRIPLE=$(rustc -Vv | grep host | cut -d ' ' -f 2)
+
+echo "--- Building Go Sidecar for $TARGET_TRIPLE ---"
+mkdir -p src-tauri/bin
+go build -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
 
 echo "--- Building Frontend ---"
 npm install
@@ -16,4 +19,5 @@ echo "--- Building Tauri Application ---"
 npm run tauri build
 
 echo "--- Build Complete ---"
-echo "Binaries are located in bin/ and src-tauri/target/release/"
+echo "Sidecar binary: src-tauri/bin/sidecar-$TARGET_TRIPLE"
+echo "Tauri bundle: src-tauri/target/release/bundle/"

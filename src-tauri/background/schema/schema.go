@@ -13,6 +13,7 @@ type ProfileRegistry struct {
 
 type MySpaceLayout struct {
 	ThemeCSSBase64  string   `json:"theme_css_base64"` // Sandboxed custom CSS styles
+	HTMLContent     string   `json:"html_content"`      // Sandboxed custom HTML
 	BackgroundImage string   `json:"background_image"` // Veilid/IPFS asset reference
 	TopEightFriends []string `json:"top_eight_friends"` // Array of peer Veilid Crypto Routing IDs
 }
