@@ -14,8 +14,8 @@ func TestVeilidClient_PublishProfile(t *testing.T) {
 		var req RPCRequest
 		json.NewDecoder(r.Body).Decode(&req)
 
-		if req.Method != "veilid.set_dht_value" {
-			t.Errorf("Expected method veilid.set_dht_value, got %s", req.Method)
+		if req.Method != "veilid.routing_context_set_dht_value" {
+			t.Errorf("Expected method veilid.routing_context_set_dht_value, got %s", req.Method)
 		}
 
 		resp := RPCResponse{
@@ -44,8 +44,8 @@ func TestVeilidClient_FetchProfile(t *testing.T) {
 		var req RPCRequest
 		json.NewDecoder(r.Body).Decode(&req)
 
-		if req.Method != "veilid.get_dht_value" {
-			t.Errorf("Expected method veilid.get_dht_value, got %s", req.Method)
+		if req.Method != "veilid.routing_context_get_dht_value" {
+			t.Errorf("Expected method veilid.routing_context_get_dht_value, got %s", req.Method)
 		}
 
 		registry := schema.ProfileRegistry{Username: "testuser"}

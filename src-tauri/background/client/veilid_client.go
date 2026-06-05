@@ -64,8 +64,8 @@ func (c *VeilidClient) PublishProfile(registry schema.ProfileRegistry) (string, 
 	}
 
 	// Mocking the Veilid DHT record creation
-	// In a real implementation, this would call a Veilid method like 'set_dht_value'
-	result, err := c.call("veilid.set_dht_value", map[string]interface{}{
+	// In a real implementation, this would call a Veilid method like 'routing_context_set_dht_value'
+	result, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
 		"value": data,
 	})
 	if err != nil {
@@ -82,7 +82,7 @@ func (c *VeilidClient) PublishProfile(registry schema.ProfileRegistry) (string, 
 }
 
 func (c *VeilidClient) FetchProfile(dhtKey string) (*schema.ProfileRegistry, error) {
-	result, err := c.call("veilid.get_dht_value", map[string]interface{}{
+	result, err := c.call("veilid.routing_context_get_dht_value", map[string]interface{}{
 		"key": dhtKey,
 	})
 	if err != nil {
@@ -107,4 +107,32 @@ func (c *VeilidClient) FetchProfile(dhtKey string) (*schema.ProfileRegistry, err
 	}
 
 	return &registry, nil
+}
+
+func (c *VeilidClient) SendMessage(msg schema.Message) error {
+	data, _ := json.Marshal(msg)
+	_, err := c.call("veilid.app_message", map[string]interface{}{
+		"target": msg.Recipient,
+		"data":   data,
+	})
+	if err != nil {
+		// FALLBACK for prototype
+		fmt.Printf("Simulated P2P message sent to %s: %s\n", msg.Recipient, msg.Content)
+		return nil
+	}
+	return nil
+}
+
+func (c *VeilidClient) GetMessages() ([]schema.Message, error) {
+	result, err := c.call("veilid.get_app_messages", nil)
+	if err != nil {
+		// FALLBACK for prototype: return empty inbox
+		return []schema.Message{}, nil
+	}
+
+	var messages []schema.Message
+	if err := json.Unmarshal(result, &messages); err != nil {
+		return nil, err
+	}
+	return messages, nil
 }

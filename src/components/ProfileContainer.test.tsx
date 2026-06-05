@@ -4,12 +4,14 @@ import React from 'react';
 import { ProfileContainer } from './ProfileContainer';
 
 describe('ProfileContainer', () => {
-  it('renders an iframe', () => {
+  it('renders a sandboxed iframe with srcdoc', () => {
     const { container } = render(
       <ProfileContainer cssStyles="body { color: red; }" htmlContent="<h1>Test</h1>" />
     );
     const iframe = container.querySelector('iframe');
     expect(iframe).toBeDefined();
-    expect(iframe?.getAttribute('sandbox')).toContain('allow-same-origin');
+    // Verify it's a strict null-origin sandbox
+    expect(iframe?.getAttribute('sandbox')).toBe("");
+    expect(iframe?.getAttribute('srcdoc')).toContain('<h1>Test</h1>');
   });
 });

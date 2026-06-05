@@ -8,7 +8,7 @@ This session focused on transforming the initial scaffold into a functional, sec
 2.  **Schema Alignment**: The Go `ProfileRegistry` schema now correctly includes `html_content`, matching the frontend's MySpace-style personalization features and preventing data loss.
 3.  **Security Hardening**:
     *   **CORS**: Restricted Go API access to only the Tauri application origins.
-    *   **Sandboxing**: Implemented a strict null-origin sandbox for user-provided CSS/HTML rendering.
+    *   **Sandboxing**: Implemented a verified null-origin sandbox using `srcdoc` and an empty `sandbox` attribute for user-provided CSS/HTML rendering, preventing same-origin access.
 4.  **Production Readiness**:
     *   **Integration Tests**: Added a suite of Go integration tests covering all API endpoints.
     *   **Dependency Audit**: Corrected hallucinated versions in `go.mod` and `package.json` to stable, existing releases.

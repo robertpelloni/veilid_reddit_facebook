@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
 interface ProfileProps {
   cssStyles: string;
@@ -6,34 +6,28 @@ interface ProfileProps {
 }
 
 export const ProfileContainer: React.FC<ProfileProps> = ({ cssStyles, htmlContent }) => {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  useEffect(() => {
-    if (!iframeRef.current) return;
-    const doc = iframeRef.current.contentDocument;
-    if (!doc) return;
-
-    const completeHTML = `
-      <html>
-        <head>
-          <style>${cssStyles}</style>
-        </head>
-        <body>
-          <div id="myspace-subreddit-root">${htmlContent}</div>
-        </body>
-      </html>
-    `;
-
-    doc.open();
-    doc.write(completeHTML);
-    doc.close();
-  }, [cssStyles, htmlContent]);
+  const completeHTML = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          ${cssStyles}
+        </style>
+      </head>
+      <body>
+        <div id="myspace-subreddit-root">
+          ${htmlContent}
+        </div>
+      </body>
+    </html>
+  `;
 
   return (
     <iframe
-      ref={iframeRef}
+      srcDoc={completeHTML}
       className="w-full h-screen border-none"
-      sandbox="allow-same-origin"
+      sandbox=""
       title="Sovereign Subreddit Sandbox"
     />
   );

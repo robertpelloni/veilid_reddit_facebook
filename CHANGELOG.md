@@ -1,5 +1,12 @@
 # CHANGELOG.md
 
+## [0.4.0] - 2026-06-05
+### Added
+- **Real-time Messaging**: Implemented P2P messaging using Veilid `AppMessage` protocol.
+- **Messaging API**: Added `/message/send` and `/message/inbox` endpoints.
+- **Developer Documentation**: Created `API_DOCUMENTATION.md` for team handoff.
+- **Messaging Tests**: Added integration tests for the messaging layer.
+
 ## [0.3.0] - 2026-06-05
 ### Added
 - **CI/CD Pipeline**: Integrated GitHub Actions workflow (`.github/workflows/release.yml`) for automated multi-platform builds.

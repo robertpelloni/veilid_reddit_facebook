@@ -11,6 +11,8 @@ import (
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/storage"
 )
 
+const DefaultSidecarPort = "1337"
+
 type AppState struct {
 	Veilid  *client.VeilidClient
 	Storage *storage.SQLiteStorage
@@ -40,6 +42,8 @@ func main() {
 	mux.HandleFunc("/register", state.handleRegister)
 	mux.HandleFunc("/discovery", state.handleDiscovery)
 	mux.HandleFunc("/status", state.handleStatus)
+	mux.HandleFunc("/message/send", state.handleSendMessage)
+	mux.HandleFunc("/message/inbox", state.handleGetInbox)
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -56,8 +60,9 @@ func main() {
 		mux.ServeHTTP(w, r)
 	})
 
-	fmt.Println("Sidecar listening on 127.0.0.1:1337")
-	if err := http.ListenAndServe("127.0.0.1:1337", handler); err != nil {
+	addr := "127.0.0.1:" + DefaultSidecarPort
+	fmt.Printf("Sidecar listening on %s\n", addr)
+	if err := http.ListenAndServe(addr, handler); err != nil {
 		fmt.Printf("Error starting sidecar: %v\n", err)
 	}
 }
@@ -168,4 +173,36 @@ func (s *AppState) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(status)
+}
+
+func (s *AppState) handleSendMessage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var msg schema.Message
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.Veilid.SendMessage(msg); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "sent"})
+}
+
+func (s *AppState) handleGetInbox(w http.ResponseWriter, r *http.Request) {
+	messages, err := s.Veilid.GetMessages()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(messages)
 }

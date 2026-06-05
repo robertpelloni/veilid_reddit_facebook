@@ -126,4 +126,28 @@ func TestIntegrationAPI(t *testing.T) {
 			t.Errorf("Expected FetchUser, got %s", fetched.Username)
 		}
 	})
+
+	t.Run("Messaging API", func(t *testing.T) {
+		msg := schema.Message{
+			SenderID:  "alice",
+			Recipient: "bob",
+			Content:   "Hello Bob!",
+		}
+		body, _ := json.Marshal(msg)
+		req := httptest.NewRequest("POST", "/message/send", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		state.handleSendMessage(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("Send message failed: %d", rr.Code)
+		}
+
+		req = httptest.NewRequest("GET", "/message/inbox", nil)
+		rr = httptest.NewRecorder()
+		state.handleGetInbox(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("Get inbox failed: %d", rr.Code)
+		}
+	})
 }

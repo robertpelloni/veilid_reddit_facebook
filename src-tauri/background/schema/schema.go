@@ -26,3 +26,13 @@ type PostHeader struct {
 	TargetKey string    `json:"target_key"` // Specific Veilid DHT key containing the body & comment tree
 	Timestamp time.Time `json:"timestamp"`
 }
+
+// Message represents a P2P real-time message between users.
+type Message struct {
+	ID        string    `json:"id"`
+	SenderID  string    `json:"sender_id"`
+	Recipient string    `json:"recipient_id"`
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
+	Signature string    `json:"signature,omitempty"`
+}
