@@ -44,6 +44,8 @@ func main() {
 	mux.HandleFunc("/status", state.handleStatus)
 	mux.HandleFunc("/message/send", state.handleSendMessage)
 	mux.HandleFunc("/message/inbox", state.handleGetInbox)
+	mux.HandleFunc("/dao/proposals", state.handleDAOProposals)
+	mux.HandleFunc("/dao/vote", state.handleDAOVote)
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -205,4 +207,43 @@ func (s *AppState) handleGetInbox(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messages)
+}
+
+func (s *AppState) handleDAOProposals(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		var p schema.DAOProposal
+		json.NewDecoder(r.Body).Decode(&p)
+		if _, err := s.Veilid.PublishDAOProposal(p); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		s.Storage.SaveDAOProposal(&p)
+		json.NewEncoder(w).Encode(p)
+		return
+	}
+
+	proposals, err := s.Storage.GetDAOProposals()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(proposals)
+}
+
+func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var v schema.DAOVote
+	json.NewDecoder(r.Body).Decode(&v)
+	if err := s.Veilid.CastDAOVoteP2P(v); err != nil {
+		// Proceed with local save even if P2P fails in prototype
+	}
+	if err := s.Storage.CastDAOVote(&v); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"status": "voted"})
 }

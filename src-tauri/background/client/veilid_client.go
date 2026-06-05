@@ -138,3 +138,24 @@ func (c *VeilidClient) GetMessages() ([]schema.Message, error) {
 	}
 	return messages, nil
 }
+
+func (c *VeilidClient) PublishDAOProposal(p schema.DAOProposal) (string, error) {
+	data, _ := json.Marshal(p)
+	result, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
+		"value": data,
+	})
+	if err != nil {
+		return "mock_dao_prop_" + p.ID, nil
+	}
+	var dhtKey string
+	json.Unmarshal(result, &dhtKey)
+	return dhtKey, nil
+}
+
+func (c *VeilidClient) CastDAOVoteP2P(v schema.DAOVote) error {
+	data, _ := json.Marshal(v)
+	_, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
+		"value": data,
+	})
+	return err
+}
