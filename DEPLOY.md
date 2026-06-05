@@ -42,6 +42,19 @@ npm run tauri build
 - Sovereign identities are derived from Veilid Crypto Routing Pairs.
 - **Backup:** Identity keys are persisted in the browser's `localStorage` and the sidecar's SQLite cache. Use the "Export Identity" feature (see manual) for manual backups.
 
+## Release Packaging & Distribution
+
+The build process generates two primary artifacts that must be distributed together:
+
+1.  **Go Sidecar:** Located in `src-tauri/bin/sidecar-<target>`. This is the P2P engine.
+2.  **Tauri App Bundle:** Located in `src-tauri/target/release/bundle/`. This includes the React UI and the shell logic to launch the sidecar.
+
+### Multi-Node Distribution
+To distribute to a network of nodes:
+1.  **Zip the bundle:** Create a package containing the installer and the sidecar binary.
+2.  **Install:** Run the platform-specific installer (msi, dmg, deb).
+3.  **Bootstrap:** Ensure the `veilid-core` on the target machine points to a shared bootstrap node (see `TESTNET.md`).
+
 ## CI/CD Pipeline
 
 The project includes a comprehensive automated pipeline for testing and deployment using GitHub Actions.

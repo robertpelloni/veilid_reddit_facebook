@@ -1,5 +1,5 @@
 import React from 'react';
-import { BarChart3, Clock, DollarSign, Vote } from 'lucide-react';
+import { Vote } from 'lucide-react';
 
 export interface DAOProposal {
   id: string;
