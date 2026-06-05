@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## [1.1.0-staging] - 2026-06-05
+### Added
+- **Staging Infrastructure**: Created `STAGING.md` with multi-node configuration guidelines and port offset strategies.
+- **Environment Isolation**: Prepared storage and network configurations for the staging subset of the Veilid DHT.
+
 ## [1.0.0] - 2026-06-05
 ### Added
 - **Production Baseline**: Finalized the serverless P2P architecture for public release.
