@@ -116,6 +116,7 @@ func (c *VeilidClient) SendMessage(msg schema.Message) error {
 		"data":   data,
 	})
 	if err != nil {
+		fmt.Printf("Veilid message error for recipient %s: %v\n", msg.Recipient, err)
 		// FALLBACK for prototype
 		fmt.Printf("Simulated P2P message sent to %s: %s\n", msg.Recipient, msg.Content)
 		return nil
@@ -126,6 +127,7 @@ func (c *VeilidClient) SendMessage(msg schema.Message) error {
 func (c *VeilidClient) GetMessages() ([]schema.Message, error) {
 	result, err := c.call("veilid.get_app_messages", nil)
 	if err != nil {
+		fmt.Printf("Veilid inbox error: %v\n", err)
 		// FALLBACK for prototype: return empty inbox
 		return []schema.Message{}, nil
 	}

@@ -7,7 +7,7 @@
   },
   "package": {
     "productName": "veilid-reddit-myspace",
-    "version": "1.1.0-staging"
+    "version": "1.1.0-testnet"
   },
   "tauri": {
     "allowlist": {

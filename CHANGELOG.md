@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## [1.1.0-testnet] - 2026-06-05
+### Added
+- **Testnet Support**: Created `TESTNET.md` with guidelines for public P2P verification.
+- **Improved Observability**: Added detailed error logging in the P2P messaging client to diagnose testnet failures.
+
 ## [1.1.0-staging] - 2026-06-05
 ### Added
 - **Staging Infrastructure**: Created `STAGING.md` with multi-node configuration guidelines and port offset strategies.

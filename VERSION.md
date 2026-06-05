@@ -1,1 +1,1 @@
-1.1.0-staging
+1.1.0-testnet
