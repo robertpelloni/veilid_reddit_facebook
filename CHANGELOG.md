@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## [1.0.0] - 2026-06-05
+### Added
+- **Official Release**: Finalized the serverless P2P architecture for public release.
+- **Unified Identity**: Stabilized the sovereign Routing Pair management and profile publication.
+- **Messaging Finalization**: Completed real-time P2P communication layer.
+- **Production Documentation**: Added comprehensive Deployment and User Manuals.
+- **Hardened Security**: Implemented null-origin sandboxing and restricted API access.
+
 ## [1.1.0-testnet] - 2026-06-05
 ### Added
 - **Testnet Support**: Created `TESTNET.md` with guidelines for public P2P verification.
@@ -9,14 +17,6 @@
 ### Added
 - **Staging Infrastructure**: Created `STAGING.md` with multi-node configuration guidelines and port offset strategies.
 - **Environment Isolation**: Prepared storage and network configurations for the staging subset of the Veilid DHT.
-
-## [1.0.0] - 2026-06-05
-### Added
-- **Production Baseline**: Finalized the serverless P2P architecture for public release.
-- **CI/CD Maturity**: Integrated automated testing and multi-platform release workflows.
-- **Unified Identity**: Stabilized the sovereign Routing Pair management and profile publication.
-- **Messaging Finalization**: Completed real-time P2P communication layer.
-- **Production Documentation**: Added comprehensive Deployment and User Manuals.
 
 ## [0.5.0] - 2026-06-05
 ### Added

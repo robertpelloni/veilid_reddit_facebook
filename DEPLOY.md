@@ -21,25 +21,6 @@
    npm run tauri dev
    ```
 
-## Network Deployment (UAT)
-To deploy and test on a network of nodes for User Acceptance Testing:
-
-### 1. Multi-Node Local Setup
-For testing on a single machine with multiple "nodes":
-1.  **Clone with Isolation:** Copy the repository into separate directories (e.g., `node1/`, `node2/`).
-2.  **Unique Veilid Configs:** Each directory must have a unique `veilid-core` config pointing to different local ports and storage paths.
-3.  **Sidecar Port Offsets:** If running multiple sidecars, modify the `DefaultSidecarPort` in `src-tauri/background/main.go` for each node to prevent port collisions.
-4.  **Run:** Start each node's sidecar and frontend independently.
-
-### 2. Physical Network Setup
-1.  **Build All:** Run the automated build script on your build machine:
-    ```bash
-    ./build-all.sh
-    ```
-2.  **Distribute Binaries:** Distribute the generated sidecar (from `src-tauri/bin/`) and the Tauri bundle to the test devices.
-3.  **Bootstrap:** Ensure at least one node is configured as a "bootstrap node" with a static IP or reachable DHT key so others can join the network.
-4.  **UAT Scenarios:** Execute the test cases defined in `UAT.md`.
-
 ## Production Deployment
 
 ### 1. Hardened Builds
@@ -75,3 +56,6 @@ Whenever a new tag matching `v*` is pushed, the `Release` workflow is triggered:
 1. **Multi-platform Build:** Concurrently builds for macOS, Ubuntu, and Windows.
 2. **Sidecar Compilation:** Automatically compiles the Go backend for the target architecture.
 3. **Artifact Distribution:** Creates a draft GitHub Release with bundled installers and binaries.
+
+## UAT and Staging Environments
+For detailed instructions on setting up non-production environments, refer to `UAT.md`, `STAGING.md`, and `TESTNET.md`.
