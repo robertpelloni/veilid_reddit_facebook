@@ -27,7 +27,9 @@ func main() {
 	fmt.Println("Veilid Sidecar Starting...")
 
 	var dataDir string
+	var port string
 	flag.StringVar(&dataDir, "data-dir", ".", "Directory for SQLite database and cache")
+	flag.StringVar(&port, "port", DefaultSidecarPort, "Port for the sidecar HTTP API")
 	flag.Parse()
 
 	dbPath := filepath.Join(dataDir, "veilid_cache.db")
@@ -77,7 +79,7 @@ func main() {
 		mux.ServeHTTP(w, r)
 	})
 
-	addr := "127.0.0.1:" + DefaultSidecarPort
+	addr := "127.0.0.1:" + port
 	fmt.Printf("Sidecar listening on %s\n", addr)
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		fmt.Printf("Error starting sidecar: %v\n", err)
