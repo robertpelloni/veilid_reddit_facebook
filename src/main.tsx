@@ -8,27 +8,26 @@ import { FeedAggregator } from './services/aggregator';
 import { DAOProposalList, DAOProposal } from './components/DAO/DAOProposalList';
 import { DAOProposalForm } from './components/DAO/DAOProposalForm';
 import { CommentThread } from './components/CommentThread';
-import { Gavel, Plus } from 'lucide-react';
+import { Gavel, Plus, LogOut, Skull } from 'lucide-react';
+import { IdentityVault, SovereignIdentity } from './services/identity';
+import { SovereignOnboarding } from './components/SovereignOnboarding';
 
 const aggregator = new FeedAggregator();
 
 const App = () => {
+  const [identity, setIdentity] = useState<SovereignIdentity | null>(null);
   const [feed, setFeed] = useState<any[]>([]);
   const [newKey, setNewKey] = useState('');
   const [feedback, setFeedback] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [myDhtKey, setMyDhtKey] = useState<string | null>(null);
   const [discoveredKeys, setDiscoveredKeys] = useState<any[]>([]);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [daoProposals, setDAOProposals] = useState<DAOProposal[]>([]);
   const [showProposalForm, setShowProposalForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'social' | 'dao'>('social');
 
-  const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>({
-    css: `body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`,
-    html: `<h1>Bob's Sovereign Profile</h1><p>I own my data. No central server. No trackers. Just P2P.</p><div style="background: #f6f7f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd;"><strong>Current Status:</strong> Building the decentralized future.</div>`
-  });
+  const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>(null);
 
   const fetchDiscovery = async () => {
     try {
@@ -48,12 +47,23 @@ const App = () => {
   };
 
   useEffect(() => {
-    aggregator.fetchFeed().then(setFeed);
-    const savedKey = localStorage.getItem('my_dht_key');
-    if (savedKey) setMyDhtKey(savedKey);
-    fetchDiscovery();
-    fetchDAOProposals();
+    const savedId = IdentityVault.get();
+    if (savedId) {
+        setIdentity(savedId);
+        setViewingProfile({
+            css: `body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`,
+            html: `<h1>${savedId.username}'s Sovereign Profile</h1><p>I own my data. No central server. No trackers. Just P2P.</p><div style="background: #f6f7f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd;"><strong>Current Status:</strong> Building the decentralized future.</div>`
+        });
+    }
   }, []);
+
+  useEffect(() => {
+    if (identity) {
+        aggregator.fetchFeed().then(setFeed);
+        fetchDiscovery();
+        fetchDAOProposals();
+    }
+  }, [identity]);
 
   const handleSubscribe = async () => {
     aggregator.subscribe(newKey);
@@ -85,14 +95,14 @@ const App = () => {
   };
 
   const handleCreatePost = async () => {
-    if (!myDhtKey || !newPostTitle) return;
+    if (!identity || !newPostTitle) return;
     try {
         await fetch('http://127.0.0.1:1337/posts/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 post_id: `post-${Date.now()}`,
-                author_id: myDhtKey,
+                author_id: identity.dht_key,
                 title: newPostTitle,
                 target_key: 'TODO'
             })
@@ -119,8 +129,13 @@ const App = () => {
       });
       if (!response.ok) throw new Error('Publish failed');
       const data = await response.json();
-      setMyDhtKey(data.dht_key);
-      localStorage.setItem('my_dht_key', data.dht_key);
+      // Identity updated in Vault via save call inside generate (if we re-generate)
+      // For handleSaveProfile, we just update the DHT key locally if it changed
+      if (identity) {
+          const updated = { ...identity, dht_key: data.dht_key };
+          setIdentity(updated);
+          IdentityVault.save(updated);
+      }
 
       // Automatically register for discovery
       await fetch('http://127.0.0.1:1337/register', {
@@ -140,13 +155,14 @@ const App = () => {
   };
 
   const handleVote = async (id: string, weight: number) => {
+    if (!identity) return;
     try {
         await fetch('http://127.0.0.1:1337/dao/vote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 proposal_id: id,
-                voter_id: myDhtKey,
+                voter_id: identity.dht_key,
                 weight
             })
         });
@@ -154,8 +170,18 @@ const App = () => {
     } catch (e) { console.error(e); }
   };
 
+  const handlePanic = () => {
+      IdentityVault.clear();
+      setIdentity(null);
+      window.location.reload();
+  };
+
+  if (!identity) {
+      return <SovereignOnboarding onAuthenticated={setIdentity} />;
+  }
+
   return (
-    <div className="p-8 max-w-6xl mx-auto font-sans bg-gray-50 min-h-screen">
+    <div className="p-8 max-w-6xl mx-auto font-sans bg-gray-50 min-h-screen transition-all">
       <header className="mb-10 border-b pb-6 flex justify-between items-center">
         <div className="flex flex-col gap-4">
           <div>
@@ -179,14 +205,25 @@ const App = () => {
                   <Gavel size={16} />
                   Governance DAO
               </button>
+              <button
+                onClick={handlePanic}
+                title="Panic: Destructive Logout"
+                className="px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 font-bold text-sm"
+              >
+                  <Skull size={16} />
+                  Panic
+              </button>
           </div>
         </div>
-        {myDhtKey && (
-          <div className="text-right">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Your Identity Key</span>
-            <p className="text-sm font-mono text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">{myDhtKey}</p>
-          </div>
-        )}
+        <div className="text-right">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">Authenticated as {identity.username}</span>
+            <div className="flex items-center gap-3">
+                <p className="text-sm font-mono text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100 truncate max-w-[200px]">{identity.dht_key}</p>
+                <button onClick={() => { IdentityVault.clear(); setIdentity(null); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                    <LogOut size={18} />
+                </button>
+            </div>
+        </div>
       </header>
 
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -225,7 +262,7 @@ const App = () => {
 
                   {showProposalForm && (
                       <DAOProposalForm
-                        proposerId={myDhtKey || 'anonymous'}
+                        proposerId={identity.dht_key}
                         onCancel={() => setShowProposalForm(false)}
                         onSuccess={() => {
                             setShowProposalForm(false);
@@ -253,7 +290,7 @@ const App = () => {
                 />
                 <button
                     onClick={handleCreatePost}
-                    disabled={!myDhtKey}
+                    disabled={!identity}
                     className="w-full py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50"
                 >
                     Post update
@@ -266,7 +303,7 @@ const App = () => {
                   <h3 className="font-bold text-blue-600 hover:underline cursor-pointer text-sm">{post.title}</h3>
                   <p className="text-[10px] text-gray-400 mt-1">By: <span className="font-mono">{post.author_id.substring(0, 12)}...</span></p>
 
-                  <CommentThread postId={post.post_id} myId={myDhtKey || 'anonymous'} />
+                  <CommentThread postId={post.post_id} myId={identity.dht_key} />
                 </div>
               )) : (
                 <p className="text-gray-400 italic text-sm">Your feed is empty.</p>

@@ -25,6 +25,9 @@ Staging data is isolated from production/dev data:
 
 ## Deployment to Staging
 1.  **Build:** Execute `./build-all.sh`.
-2.  **Config:** Update the `DefaultSidecarPort` in `src-tauri/background/main.go` if needed for the offset.
-3.  **Run:** Launch the staging-specific binaries.
+2.  **Config:** The sidecar now supports a `-port` flag. Launch with `-port 1338` for staging.
+3.  **Run:** Launch the staging-specific binaries:
+    ```bash
+    ./src-tauri/bin/sidecar-<arch> -port 1338 -data-dir ./staging_data
+    ```
 4.  **Verification:** Execute the UAT scenarios defined in `UAT.md` within this environment.

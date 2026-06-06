@@ -1,6 +1,13 @@
 # DEPLOY.md
 
 ## Environment Setup
+To automate the installation of system libraries and configuration for Ubuntu (especially WebKitGTK 4.0 compatibility on 24.04), run:
+
+```bash
+chmod +x setup-env.sh
+./setup-env.sh
+```
+
 - **Rust/Cargo:** Required for `veilid-core` and Tauri.
 - **Go v1.22+:** Required for the background sidecar. (Requires CGO and a C compiler like GCC or Clang for SQLite support).
 - **Node.js & npm/pnpm:** Required for the React frontend.
@@ -12,9 +19,11 @@
    npm install
    go mod download
    ```
-2. Build the Go sidecar:
+2. Build the Go sidecar (requires target triple suffix):
    ```bash
-   go build -o bin/sidecar ./src-tauri/background/main.go
+   # Example for x86_64 Linux
+   mkdir -p src-tauri/bin
+   go build -o src-tauri/bin/sidecar-x86_64-unknown-linux-gnu ./src-tauri/background/main.go
    ```
 3. Start the application:
    ```bash
@@ -24,10 +33,12 @@
 ## Production Deployment
 
 ### 1. Hardened Builds
-For production, use the release flags for both the sidecar and the Tauri shell:
+For production, use the release flags for both the sidecar and the Tauri shell. Ensure the sidecar is placed in `src-tauri/bin/` with the correct target triple suffix.
+
 ```bash
 # Build Go sidecar with stripping and optimizations
-go build -ldflags="-s -w" -o bin/sidecar ./src-tauri/background/main.go
+TARGET_TRIPLE=$(rustc -Vv | grep host | cut -d ' ' -f 2)
+go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
 
 # Build Tauri Production Bundle
 npm run tauri build
@@ -50,8 +61,16 @@ The build process generates two primary artifacts that must be distributed toget
 2.  **Tauri App Bundle:** Located in `src-tauri/target/release/bundle/`. This includes the React UI and the shell logic to launch the sidecar.
 
 ### Multi-Node Distribution
-To distribute to a network of nodes:
-1.  **Zip the bundle:** Create a package containing the installer and the sidecar binary.
+To distribute to a network of nodes, use the packaging script to generate a standard release folder:
+
+```bash
+chmod +x package-release.sh
+./package-release.sh
+```
+
+The artifacts will be organized in `release/v<version>/`.
+
+1.  **Distribute:** Share the package containing the installer and the sidecar binary.
 2.  **Install:** Run the platform-specific installer (msi, dmg, deb).
 3.  **Bootstrap:** Ensure the `veilid-core` on the target machine points to a shared bootstrap node (see `TESTNET.md`).
 

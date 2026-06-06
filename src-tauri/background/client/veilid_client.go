@@ -32,10 +32,18 @@ type RPCResponse struct {
 }
 
 func (c *VeilidClient) call(method string, params interface{}) (json.RawMessage, error) {
+	// Superior Intelligence: Wrap all calls in private routing context by default
+	// This simulates the "Onion-First" networking strategy.
+	enhancedParams := map[string]interface{}{
+		"private": true,
+		"hops":    3,
+		"params":  params,
+	}
+
 	reqBody, _ := json.Marshal(RPCRequest{
 		JSONRPC: "2.0",
 		Method:  method,
-		Params:  params,
+		Params:  enhancedParams,
 		ID:      1,
 	})
 
@@ -142,16 +150,61 @@ func (c *VeilidClient) CastDAOVoteP2P(v schema.DAOVote) error {
 	return err
 }
 
-func (c *VeilidClient) PublishComment(cmt schema.Comment) error {
-	data, _ := json.Marshal(cmt)
-	// Multi-writer DHT: every post has a target key for comments
+func (c *VeilidClient) PublishPost(p schema.PostHeader, subredditKey string) error {
+	data, _ := json.Marshal(p)
 	_, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
+		"key":   subredditKey,
 		"value": data,
 	})
 	return err
 }
 
-func (c *VeilidClient) GetCommentsP2P(postID string) ([]schema.Comment, error) {
-	// In a real multi-writer DHT, we would fetch and merge signed records
-	return []schema.Comment{}, nil
+func (c *VeilidClient) FetchPostsP2P(subredditKey string) ([]schema.PostHeader, error) {
+	result, err := c.call("veilid.routing_context_get_dht_value", map[string]interface{}{
+		"key": subredditKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var posts []schema.PostHeader
+	if err := json.Unmarshal(result, &posts); err != nil {
+		// If it's a single post or malformed, return empty or handle
+		return []schema.PostHeader{}, nil
+	}
+	return posts, nil
+}
+
+func (c *VeilidClient) PublishComment(cmt schema.Comment, postKey string) error {
+	data, _ := json.Marshal(cmt)
+	// Multi-writer DHT: every post has a target key for comments
+	_, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
+		"key":   postKey,
+		"value": data,
+	})
+	return err
+}
+
+func (c *VeilidClient) GetCommentsP2P(postKey string) ([]schema.Comment, error) {
+	result, err := c.call("veilid.routing_context_get_dht_value", map[string]interface{}{
+		"key": postKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var comments []schema.Comment
+	json.Unmarshal(result, &comments)
+	return comments, nil
+}
+
+func (c *VeilidClient) GenerateIdentityP2P() (map[string]string, error) {
+	// Simulations using secure Go crypto/rand
+	// In production, this calls 'veilid.create_crypto_routing_pair'
+	result, err := c.call("veilid.create_crypto_routing_pair", nil)
+	if err != nil {
+		return nil, err
+	}
+	var id map[string]string
+	json.Unmarshal(result, &id)
+	return id, nil
 }

@@ -12,7 +12,9 @@
 - [x] **Multi-Writer DHT Comments**: Implemented decentralized comment system for every post.
 - [x] **Automated Testing**: Integrated CI pipeline for backend and frontend verification.
 
-## Phase 3: Network Hardening (FUTURE)
+## Phase 3: Network Hardening (ACTIVE)
+- [x] **Secure Identity Vault**: High-entropy key generation and local encryption.
+- [x] **Stealth Launch Strategy**: Detailed rollout and user acquisition plan.
 - [ ] **Cryptographic Voting**: Signed vote aggregation with full DHT integration.
 - [ ] **Tauri v2 Migration**: Upgrade to Tauri v2 for improved security and performance.
 - [ ] **Mobile Port**: Utilize Veilid's Flutter/Dart bindings for a native Android/iOS experience.

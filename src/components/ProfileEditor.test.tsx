@@ -10,7 +10,7 @@ describe('ProfileEditor', () => {
     const usernameInput = screen.getByLabelText(/username/i);
     fireEvent.change(usernameInput, { target: { value: 'Satoshi' } });
 
-    const publishButton = screen.getByRole('button', { name: /publish profile/i });
+    const publishButton = screen.getByRole('button', { name: /publish sovereign space/i });
     fireEvent.click(publishButton);
 
     expect(onSave).toHaveBeenCalledWith('Satoshi', expect.any(String), expect.any(String));

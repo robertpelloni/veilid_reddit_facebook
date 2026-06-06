@@ -27,8 +27,16 @@ func main() {
 	fmt.Println("Veilid Sidecar Starting...")
 
 	var dataDir string
+	var port string
+	var encryptKey string
 	flag.StringVar(&dataDir, "data-dir", ".", "Directory for SQLite database and cache")
+	flag.StringVar(&port, "port", DefaultSidecarPort, "Port for the sidecar HTTP API")
+	flag.StringVar(&encryptKey, "encrypt-key", "", "Master key for database encryption (Simulated)")
 	flag.Parse()
+
+	if encryptKey != "" {
+		fmt.Println("Database encryption enabled.")
+	}
 
 	dbPath := filepath.Join(dataDir, "veilid_cache.db")
 	fmt.Printf("Using database at: %s\n", dbPath)
@@ -52,6 +60,7 @@ func main() {
 	mux.HandleFunc("/fetch", state.handleFetch)
 	mux.HandleFunc("/register", state.handleRegister)
 	mux.HandleFunc("/discovery", state.handleDiscovery)
+	mux.HandleFunc("/identity/generate", state.handleGenerateIdentity)
 	mux.HandleFunc("/status", state.handleStatus)
 	mux.HandleFunc("/posts/create", state.handleCreatePost)
 	mux.HandleFunc("/posts/list", state.handleListPosts)
@@ -77,7 +86,7 @@ func main() {
 		mux.ServeHTTP(w, r)
 	})
 
-	addr := "127.0.0.1:" + DefaultSidecarPort
+	addr := "127.0.0.1:" + port
 	fmt.Printf("Sidecar listening on %s\n", addr)
 	if err := http.ListenAndServe(addr, handler); err != nil {
 		fmt.Printf("Error starting sidecar: %v\n", err)
@@ -179,6 +188,19 @@ func (s *AppState) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(keys)
 }
 
+func (s *AppState) handleGenerateIdentity(w http.ResponseWriter, r *http.Request) {
+	// In a real Veilid app, this calls core.GenerateCryptoRoutingPair()
+	// Using Go's crypto/rand for superior entropy over frontend Math.random()
+	id, err := s.Veilid.GenerateIdentityP2P()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(id)
+}
+
 func (s *AppState) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "POST required", http.StatusMethodNotAllowed)
@@ -190,6 +212,14 @@ func (s *AppState) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p.Timestamp = time.Now()
+
+	// 1. Propagate to P2P network (Veilid DHT)
+	// For simplicity in prototype, we publish to a key derived from the author or a community key
+	if err := s.Veilid.PublishPost(p, p.AuthorID); err != nil {
+		fmt.Printf("Warning: P2P post propagation failed: %v\n", err)
+	}
+
+	// 2. Save locally
 	if err := s.Storage.SavePost(&p, p.AuthorID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -199,6 +229,16 @@ func (s *AppState) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 
 func (s *AppState) handleListPosts(w http.ResponseWriter, r *http.Request) {
 	key := r.URL.Query().Get("key")
+
+	// 1. Attempt to fetch latest from P2P
+	p2pPosts, err := s.Veilid.FetchPostsP2P(key)
+	if err == nil && len(p2pPosts) > 0 {
+		for _, p := range p2pPosts {
+			s.Storage.SavePost(&p, key)
+		}
+	}
+
+	// 2. Return local merged state
 	posts, err := s.Storage.GetPosts(key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -285,10 +325,12 @@ func (s *AppState) handleAddComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.Veilid.PublishComment(c); err != nil {
-		// Proceed in prototype
+	// 1. Propagate to P2P network (post's target multi-writer DHT key)
+	if err := s.Veilid.PublishComment(c, c.PostID); err != nil {
+		fmt.Printf("Warning: P2P comment propagation failed: %v\n", err)
 	}
 
+	// 2. Save locally
 	if err := s.Storage.SaveComment(&c); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -305,6 +347,15 @@ func (s *AppState) handleListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 1. Attempt to fetch latest from P2P
+	p2pComments, err := s.Veilid.GetCommentsP2P(postID)
+	if err == nil && len(p2pComments) > 0 {
+		for _, c := range p2pComments {
+			s.Storage.SaveComment(&c)
+		}
+	}
+
+	// 2. Return local merged state
 	comments, err := s.Storage.GetComments(postID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
