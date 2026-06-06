@@ -190,6 +190,14 @@ func (s *AppState) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	p.Timestamp = time.Now()
+
+	// 1. Propagate to P2P network (Veilid DHT)
+	// For simplicity in prototype, we publish to a key derived from the author or a community key
+	if err := s.Veilid.PublishPost(p, p.AuthorID); err != nil {
+		fmt.Printf("Warning: P2P post propagation failed: %v\n", err)
+	}
+
+	// 2. Save locally
 	if err := s.Storage.SavePost(&p, p.AuthorID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -199,6 +207,16 @@ func (s *AppState) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 
 func (s *AppState) handleListPosts(w http.ResponseWriter, r *http.Request) {
 	key := r.URL.Query().Get("key")
+
+	// 1. Attempt to fetch latest from P2P
+	p2pPosts, err := s.Veilid.FetchPostsP2P(key)
+	if err == nil && len(p2pPosts) > 0 {
+		for _, p := range p2pPosts {
+			s.Storage.SavePost(&p, key)
+		}
+	}
+
+	// 2. Return local merged state
 	posts, err := s.Storage.GetPosts(key)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -285,10 +303,12 @@ func (s *AppState) handleAddComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.Veilid.PublishComment(c); err != nil {
-		// Proceed in prototype
+	// 1. Propagate to P2P network (post's target multi-writer DHT key)
+	if err := s.Veilid.PublishComment(c, c.PostID); err != nil {
+		fmt.Printf("Warning: P2P comment propagation failed: %v\n", err)
 	}
 
+	// 2. Save locally
 	if err := s.Storage.SaveComment(&c); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -305,6 +325,15 @@ func (s *AppState) handleListComments(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 1. Attempt to fetch latest from P2P
+	p2pComments, err := s.Veilid.GetCommentsP2P(postID)
+	if err == nil && len(p2pComments) > 0 {
+		for _, c := range p2pComments {
+			s.Storage.SaveComment(&c)
+		}
+	}
+
+	// 2. Return local merged state
 	comments, err := s.Storage.GetComments(postID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

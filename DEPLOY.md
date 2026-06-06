@@ -12,9 +12,11 @@
    npm install
    go mod download
    ```
-2. Build the Go sidecar:
+2. Build the Go sidecar (requires target triple suffix):
    ```bash
-   go build -o bin/sidecar ./src-tauri/background/main.go
+   # Example for x86_64 Linux
+   mkdir -p src-tauri/bin
+   go build -o src-tauri/bin/sidecar-x86_64-unknown-linux-gnu ./src-tauri/background/main.go
    ```
 3. Start the application:
    ```bash
@@ -24,10 +26,12 @@
 ## Production Deployment
 
 ### 1. Hardened Builds
-For production, use the release flags for both the sidecar and the Tauri shell:
+For production, use the release flags for both the sidecar and the Tauri shell. Ensure the sidecar is placed in `src-tauri/bin/` with the correct target triple suffix.
+
 ```bash
 # Build Go sidecar with stripping and optimizations
-go build -ldflags="-s -w" -o bin/sidecar ./src-tauri/background/main.go
+TARGET_TRIPLE=$(rustc -Vv | grep host | cut -d ' ' -f 2)
+go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
 
 # Build Tauri Production Bundle
 npm run tauri build

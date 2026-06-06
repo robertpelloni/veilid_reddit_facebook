@@ -1,7 +1,8 @@
 # CHANGELOG.md
 
-## [1.1.0] - 2026-06-05
+## [1.1.0] - 2026-06-06
 ### Added
+- **Sidecar-naming Protocol**: Standardized Go sidecar binary naming for cross-platform Tauri compatibility.
 - **DAO Integration**: Full governance engine ported to native Go core, featuring Quadratic Voting and Liquid Delegation.
 - **Decentralized Comments**: Implemented a multi-writer DHT comment system for Home Feed posts.
 - **Real-world Reddit Features**: Functional P2P post creation and feed aggregation.

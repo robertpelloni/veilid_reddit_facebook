@@ -29,12 +29,15 @@ type PostHeader struct {
 
 // Message represents a P2P real-time message between users.
 type Message struct {
-	ID        string    `json:"id"`
-	SenderID  string    `json:"sender_id"`
-	Recipient string    `json:"recipient_id"`
-	Content   string    `json:"content"`
-	Timestamp time.Time `json:"timestamp"`
-	Signature string    `json:"signature,omitempty"`
+	ID          string    `json:"id"`
+	SenderID    string    `json:"sender_id"`
+	Recipient   string    `json:"recipient_id"`
+	Content     string    `json:"content"`
+	Kind        string    `json:"kind"` // text, secret, control
+	IsEncrypted bool      `json:"is_encrypted"`
+	GroupChatID string    `json:"group_chat_id,omitempty"`
+	Timestamp   time.Time `json:"timestamp"`
+	Signature   string    `json:"signature,omitempty"`
 }
 
 // DAOProposal represents a governance proposal in the P2P network.
