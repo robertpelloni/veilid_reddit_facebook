@@ -1,6 +1,13 @@
 # DEPLOY.md
 
 ## Environment Setup
+To automate the installation of system libraries and configuration for Ubuntu (especially WebKitGTK 4.0 compatibility on 24.04), run:
+
+```bash
+chmod +x setup-env.sh
+./setup-env.sh
+```
+
 - **Rust/Cargo:** Required for `veilid-core` and Tauri.
 - **Go v1.22+:** Required for the background sidecar. (Requires CGO and a C compiler like GCC or Clang for SQLite support).
 - **Node.js & npm/pnpm:** Required for the React frontend.
@@ -54,8 +61,16 @@ The build process generates two primary artifacts that must be distributed toget
 2.  **Tauri App Bundle:** Located in `src-tauri/target/release/bundle/`. This includes the React UI and the shell logic to launch the sidecar.
 
 ### Multi-Node Distribution
-To distribute to a network of nodes:
-1.  **Zip the bundle:** Create a package containing the installer and the sidecar binary.
+To distribute to a network of nodes, use the packaging script to generate a standard release folder:
+
+```bash
+chmod +x package-release.sh
+./package-release.sh
+```
+
+The artifacts will be organized in `release/v<version>/`.
+
+1.  **Distribute:** Share the package containing the installer and the sidecar binary.
 2.  **Install:** Run the platform-specific installer (msi, dmg, deb).
 3.  **Bootstrap:** Ensure the `veilid-core` on the target machine points to a shared bootstrap node (see `TESTNET.md`).
 
