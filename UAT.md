@@ -30,7 +30,7 @@ Verify that the application meets the core functional requirements and security 
 ### Scenario E: Security & Sandboxing
 - **Action:** Attempt to publish a profile with a `<script>` tag in the HTML.
 - **Expected Result:** The profile renders, but the script **does not execute**.
-- **Verification:** Ensure the iframe sandbox `sandbox=""` or `sandbox="allow-same-origin"` (as configured) is strictly enforced.
+- **Verification:** Ensure the iframe sandbox `sandbox=""` (the most restrictive policy) is strictly enforced.
 
 ## 3. UAT Checklist
 - [ ] Application launches and sidecar starts automatically.

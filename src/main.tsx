@@ -20,6 +20,7 @@ const App = () => {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [myDhtKey, setMyDhtKey] = useState<string | null>(null);
   const [discoveredKeys, setDiscoveredKeys] = useState<any[]>([]);
+  const [newPostTitle, setNewPostTitle] = useState('');
   const [daoProposals, setDAOProposals] = useState<DAOProposal[]>([]);
   const [showProposalForm, setShowProposalForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'social' | 'dao'>('social');
@@ -81,6 +82,24 @@ const App = () => {
     setFeedbackStatus('Feedback sent successfully! (Simulated)');
     setFeedback('');
     setTimeout(() => setFeedbackStatus(''), 3000);
+  };
+
+  const handleCreatePost = async () => {
+    if (!myDhtKey || !newPostTitle) return;
+    try {
+        await fetch('http://127.0.0.1:1337/posts/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                post_id: `post-${Date.now()}`,
+                author_id: myDhtKey,
+                title: newPostTitle,
+                target_key: 'TODO'
+            })
+        });
+        setNewPostTitle('');
+        aggregator.fetchFeed().then(setFeed);
+    } catch (e) { console.error(e); }
   };
 
   const handleSaveProfile = async (username: string, css: string, html: string) => {
@@ -223,6 +242,24 @@ const App = () => {
         <aside className="lg:col-span-4 space-y-8">
           <section className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
             <h2 className="text-xl font-bold mb-4 text-gray-800">Your Home Feed</h2>
+
+            <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <input
+                    type="text"
+                    value={newPostTitle}
+                    onChange={(e) => setNewPostTitle(e.target.value)}
+                    placeholder="What's on your mind?"
+                    className="w-full p-2 mb-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
+                />
+                <button
+                    onClick={handleCreatePost}
+                    disabled={!myDhtKey}
+                    className="w-full py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                    Post update
+                </button>
+            </div>
+
             <div className="space-y-4">
               {feed.length > 0 ? feed.map(post => (
                 <div key={post.post_id} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all">

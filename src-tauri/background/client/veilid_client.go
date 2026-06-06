@@ -63,14 +63,11 @@ func (c *VeilidClient) PublishProfile(registry schema.ProfileRegistry) (string, 
 		return "", err
 	}
 
-	// Mocking the Veilid DHT record creation
-	// In a real implementation, this would call a Veilid method like 'routing_context_set_dht_value'
 	result, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
 		"value": data,
 	})
 	if err != nil {
-		// FALLBACK for prototype: if veilid-core is not running, return a simulated key
-		return "sim_key_" + registry.Username, nil
+		return "", fmt.Errorf("P2P publish failed: %v", err)
 	}
 
 	var dhtKey string
@@ -86,14 +83,7 @@ func (c *VeilidClient) FetchProfile(dhtKey string) (*schema.ProfileRegistry, err
 		"key": dhtKey,
 	})
 	if err != nil {
-		// FALLBACK for prototype: return a generic profile for the key
-		return &schema.ProfileRegistry{
-			Username: "User_" + dhtKey,
-			MySpaceSchema: schema.MySpaceLayout{
-				ThemeCSSBase64:  "body { background: #222; color: #0f0; }",
-				TopEightFriends: []string{"friend1", "friend2"},
-			},
-		}, nil
+		return nil, fmt.Errorf("P2P fetch failed for key %s: %v", dhtKey, err)
 	}
 
 	var data []byte
@@ -115,21 +105,13 @@ func (c *VeilidClient) SendMessage(msg schema.Message) error {
 		"target": msg.Recipient,
 		"data":   data,
 	})
-	if err != nil {
-		fmt.Printf("Veilid message error for recipient %s: %v\n", msg.Recipient, err)
-		// FALLBACK for prototype
-		fmt.Printf("Simulated P2P message sent to %s: %s\n", msg.Recipient, msg.Content)
-		return nil
-	}
-	return nil
+	return err
 }
 
 func (c *VeilidClient) GetMessages() ([]schema.Message, error) {
 	result, err := c.call("veilid.get_app_messages", nil)
 	if err != nil {
-		fmt.Printf("Veilid inbox error: %v\n", err)
-		// FALLBACK for prototype: return empty inbox
-		return []schema.Message{}, nil
+		return nil, err
 	}
 
 	var messages []schema.Message
@@ -145,7 +127,7 @@ func (c *VeilidClient) PublishDAOProposal(p schema.DAOProposal) (string, error) 
 		"value": data,
 	})
 	if err != nil {
-		return "mock_dao_prop_" + p.ID, nil
+		return "", err
 	}
 	var dhtKey string
 	json.Unmarshal(result, &dhtKey)
@@ -162,15 +144,11 @@ func (c *VeilidClient) CastDAOVoteP2P(v schema.DAOVote) error {
 
 func (c *VeilidClient) PublishComment(cmt schema.Comment) error {
 	data, _ := json.Marshal(cmt)
-	// Multi-writer DHT simulation: every post has a target key for comments
+	// Multi-writer DHT: every post has a target key for comments
 	_, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
 		"value": data,
 	})
-	if err != nil {
-		fmt.Printf("Simulated comment publish for post %s\n", cmt.PostID)
-		return nil
-	}
-	return nil
+	return err
 }
 
 func (c *VeilidClient) GetCommentsP2P(postID string) ([]schema.Comment, error) {
