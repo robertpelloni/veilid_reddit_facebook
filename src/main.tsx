@@ -5,6 +5,10 @@ import { ProfileContainer } from './components/ProfileContainer';
 import { ProfileEditor } from './components/ProfileEditor';
 import { NetworkStatus } from './components/NetworkStatus';
 import { FeedAggregator } from './services/aggregator';
+import { DAOProposalList, DAOProposal } from './components/DAO/DAOProposalList';
+import { DAOProposalForm } from './components/DAO/DAOProposalForm';
+import { CommentThread } from './components/CommentThread';
+import { Gavel, Plus } from 'lucide-react';
 
 const aggregator = new FeedAggregator();
 
@@ -16,6 +20,10 @@ const App = () => {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [myDhtKey, setMyDhtKey] = useState<string | null>(null);
   const [discoveredKeys, setDiscoveredKeys] = useState<any[]>([]);
+  const [newPostTitle, setNewPostTitle] = useState('');
+  const [daoProposals, setDAOProposals] = useState<DAOProposal[]>([]);
+  const [showProposalForm, setShowProposalForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<'social' | 'dao'>('social');
 
   const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>({
     css: `body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`,
@@ -32,11 +40,19 @@ const App = () => {
     } catch (e) { console.error(e); }
   };
 
+  const fetchDAOProposals = async () => {
+    try {
+        const resp = await fetch('http://127.0.0.1:1337/dao/proposals');
+        if (resp.ok) setDAOProposals(await resp.json());
+    } catch (e) { console.error(e); }
+  };
+
   useEffect(() => {
     aggregator.fetchFeed().then(setFeed);
     const savedKey = localStorage.getItem('my_dht_key');
     if (savedKey) setMyDhtKey(savedKey);
     fetchDiscovery();
+    fetchDAOProposals();
   }, []);
 
   const handleSubscribe = async () => {
@@ -66,6 +82,24 @@ const App = () => {
     setFeedbackStatus('Feedback sent successfully! (Simulated)');
     setFeedback('');
     setTimeout(() => setFeedbackStatus(''), 3000);
+  };
+
+  const handleCreatePost = async () => {
+    if (!myDhtKey || !newPostTitle) return;
+    try {
+        await fetch('http://127.0.0.1:1337/posts/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                post_id: `post-${Date.now()}`,
+                author_id: myDhtKey,
+                title: newPostTitle,
+                target_key: 'TODO'
+            })
+        });
+        setNewPostTitle('');
+        aggregator.fetchFeed().then(setFeed);
+    } catch (e) { console.error(e); }
   };
 
   const handleSaveProfile = async (username: string, css: string, html: string) => {
@@ -105,14 +139,46 @@ const App = () => {
     }
   };
 
+  const handleVote = async (id: string, weight: number) => {
+    try {
+        await fetch('http://127.0.0.1:1337/dao/vote', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                proposal_id: id,
+                voter_id: myDhtKey,
+                weight
+            })
+        });
+        fetchDAOProposals();
+    } catch (e) { console.error(e); }
+  };
+
   return (
     <div className="p-8 max-w-6xl mx-auto font-sans bg-gray-50 min-h-screen">
       <header className="mb-10 border-b pb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Veilid Reddit MySpace</h1>
-          <div className="flex items-center gap-4 mt-2">
-            <p className="text-gray-600">Decentralized, Serverless, Sovereign Social Fabric</p>
-            <NetworkStatus />
+        <div className="flex flex-col gap-4">
+          <div>
+            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Veilid Reddit MySpace</h1>
+            <div className="flex items-center gap-4 mt-2">
+                <p className="text-gray-600">Decentralized, Serverless, Sovereign Social Fabric</p>
+                <NetworkStatus />
+            </div>
+          </div>
+          <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('social')}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'social' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+              >
+                  Social Feed
+              </button>
+              <button
+                onClick={() => setActiveTab('dao')}
+                className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all ${activeTab === 'dao' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+              >
+                  <Gavel size={16} />
+                  Governance DAO
+              </button>
           </div>
         </div>
         {myDhtKey && (
@@ -125,33 +191,82 @@ const App = () => {
 
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 space-y-10">
-          <section>
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">Sovereign Profile Preview</h2>
-            <div className="border rounded-2xl overflow-hidden shadow-xl bg-white aspect-video lg:aspect-auto lg:h-[500px]">
-              {viewingProfile ? (
-                <ProfileContainer
-                  cssStyles={viewingProfile.css}
-                  htmlContent={viewingProfile.html}
-                />
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400 italic">
-                  Publish a profile to see it here
-                </div>
-              )}
-            </div>
-          </section>
+          {activeTab === 'social' ? (
+              <>
+                <section>
+                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Sovereign Profile Preview</h2>
+                    <div className="border rounded-2xl overflow-hidden shadow-xl bg-white aspect-video lg:aspect-auto lg:h-[500px]">
+                    {viewingProfile ? (
+                        <ProfileContainer
+                        cssStyles={viewingProfile.css}
+                        htmlContent={viewingProfile.html}
+                        />
+                    ) : (
+                        <div className="h-full flex items-center justify-center text-gray-400 italic">
+                        Publish a profile to see it here
+                        </div>
+                    )}
+                    </div>
+                </section>
+                <ProfileEditor onSave={handleSaveProfile} isSaving={isSavingProfile} />
+              </>
+          ) : (
+              <section className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-800">Governance Proposals</h2>
+                    <button
+                        onClick={() => setShowProposalForm(true)}
+                        className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-purple-700 transition-all shadow-lg shadow-purple-100"
+                    >
+                        <Plus size={18} />
+                        New Proposal
+                    </button>
+                  </div>
 
-          <ProfileEditor onSave={handleSaveProfile} isSaving={isSavingProfile} />
+                  {showProposalForm && (
+                      <DAOProposalForm
+                        proposerId={myDhtKey || 'anonymous'}
+                        onCancel={() => setShowProposalForm(false)}
+                        onSuccess={() => {
+                            setShowProposalForm(false);
+                            fetchDAOProposals();
+                        }}
+                      />
+                  )}
+
+                  <DAOProposalList proposals={daoProposals} onVote={handleVote} />
+              </section>
+          )}
         </div>
 
         <aside className="lg:col-span-4 space-y-8">
           <section className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
             <h2 className="text-xl font-bold mb-4 text-gray-800">Your Home Feed</h2>
+
+            <div className="mb-6 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                <input
+                    type="text"
+                    value={newPostTitle}
+                    onChange={(e) => setNewPostTitle(e.target.value)}
+                    placeholder="What's on your mind?"
+                    className="w-full p-2 mb-2 bg-white border border-gray-200 rounded-lg text-sm outline-none"
+                />
+                <button
+                    onClick={handleCreatePost}
+                    disabled={!myDhtKey}
+                    className="w-full py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                    Post update
+                </button>
+            </div>
+
             <div className="space-y-4">
               {feed.length > 0 ? feed.map(post => (
                 <div key={post.post_id} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all">
                   <h3 className="font-bold text-blue-600 hover:underline cursor-pointer text-sm">{post.title}</h3>
                   <p className="text-[10px] text-gray-400 mt-1">By: <span className="font-mono">{post.author_id.substring(0, 12)}...</span></p>
+
+                  <CommentThread postId={post.post_id} myId={myDhtKey || 'anonymous'} />
                 </div>
               )) : (
                 <p className="text-gray-400 italic text-sm">Your feed is empty.</p>

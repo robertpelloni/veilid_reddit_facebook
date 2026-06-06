@@ -30,29 +30,19 @@ export class FeedAggregator {
     const allPosts: PostHeader[] = [];
 
     // Aggregation Logic:
-    // Iterate through each subscribed user's key to fetch their profile metadata.
-    // In a fully decentralized state, this would crawl their sub-DHT keys for post lists.
+    // Iterate through each subscribed user's key to fetch their actual posts from the sidecar.
 
     for (const key of this.subscribedKeys) {
         try {
-            const profileResp = await fetch(`${this.baseUrl}/fetch?key=${key}`);
-            if (!profileResp.ok) continue;
-            const profile = await profileResp.json();
+            const postsResp = await fetch(`${this.baseUrl}/posts/list?key=${key}`);
+            if (!postsResp.ok) continue;
+            const userPosts = await postsResp.json();
 
-            // For the current prototype, the sidecar generates a consistent
-            // post based on the profile username to ensure the feed is functional.
-            const userPosts: PostHeader[] = [
-                {
-                    post_id: `id_${key}_latest`,
-                    author_id: key,
-                    title: `P2P update from ${profile.username}`,
-                    target_key: `target_${key}`,
-                    timestamp: profile.updated_at || new Date().toISOString()
-                }
-            ];
-            allPosts.push(...userPosts);
+            if (Array.isArray(userPosts)) {
+                allPosts.push(...userPosts);
+            }
         } catch (e) {
-            console.error(`Failed to aggregate from key ${key}:`, e);
+            console.error(`Failed to aggregate posts from key ${key}:`, e);
         }
     }
 

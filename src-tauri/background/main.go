@@ -2,11 +2,16 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
+
+	"time"
 
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/client"
+	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/core"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/schema"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/storage"
 )
@@ -21,7 +26,13 @@ type AppState struct {
 func main() {
 	fmt.Println("Veilid Sidecar Starting...")
 
-	dbPath := "veilid_cache.db"
+	var dataDir string
+	flag.StringVar(&dataDir, "data-dir", ".", "Directory for SQLite database and cache")
+	flag.Parse()
+
+	dbPath := filepath.Join(dataDir, "veilid_cache.db")
+	fmt.Printf("Using database at: %s\n", dbPath)
+
 	s, err := storage.NewSQLiteStorage(dbPath)
 	if err != nil {
 		log.Fatalf("Failed to initialize storage: %v", err)
@@ -42,8 +53,14 @@ func main() {
 	mux.HandleFunc("/register", state.handleRegister)
 	mux.HandleFunc("/discovery", state.handleDiscovery)
 	mux.HandleFunc("/status", state.handleStatus)
+	mux.HandleFunc("/posts/create", state.handleCreatePost)
+	mux.HandleFunc("/posts/list", state.handleListPosts)
 	mux.HandleFunc("/message/send", state.handleSendMessage)
 	mux.HandleFunc("/message/inbox", state.handleGetInbox)
+	mux.HandleFunc("/dao/proposals", state.handleDAOProposals)
+	mux.HandleFunc("/dao/vote", state.handleDAOVote)
+	mux.HandleFunc("/comments/add", state.handleAddComment)
+	mux.HandleFunc("/comments/list", state.handleListComments)
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -162,6 +179,34 @@ func (s *AppState) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(keys)
 }
 
+func (s *AppState) handleCreatePost(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+	var p schema.PostHeader
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	p.Timestamp = time.Now()
+	if err := s.Storage.SavePost(&p, p.AuthorID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(p)
+}
+
+func (s *AppState) handleListPosts(w http.ResponseWriter, r *http.Request) {
+	key := r.URL.Query().Get("key")
+	posts, err := s.Storage.GetPosts(key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(posts)
+}
+
 func (s *AppState) handleStatus(w http.ResponseWriter, r *http.Request) {
 	// Mocking network status
 	status := map[string]interface{}{
@@ -205,4 +250,108 @@ func (s *AppState) handleGetInbox(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(messages)
+}
+
+func (s *AppState) handleDAOProposals(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		var p schema.DAOProposal
+		json.NewDecoder(r.Body).Decode(&p)
+		if _, err := s.Veilid.PublishDAOProposal(p); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		s.Storage.SaveDAOProposal(&p)
+		json.NewEncoder(w).Encode(p)
+		return
+	}
+
+	proposals, err := s.Storage.GetDAOProposals()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(proposals)
+}
+
+func (s *AppState) handleAddComment(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var c schema.Comment
+	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if err := s.Veilid.PublishComment(c); err != nil {
+		// Proceed in prototype
+	}
+
+	if err := s.Storage.SaveComment(&c); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "added"})
+}
+
+func (s *AppState) handleListComments(w http.ResponseWriter, r *http.Request) {
+	postID := r.URL.Query().Get("post_id")
+	if postID == "" {
+		http.Error(w, "Missing post_id", http.StatusBadRequest)
+		return
+	}
+
+	comments, err := s.Storage.GetComments(postID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(comments)
+}
+
+func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var v schema.DAOVote
+	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// 1. Calculate weighted power using Liquid Delegation core logic
+	power, err := core.CalculateEffectivePower(s.Storage, v.VoterID, "general")
+	if err != nil {
+		fmt.Printf("Warning: failed to calculate effective power, using weight 1.0: %v\n", err)
+		if v.Weight == 0 { v.Weight = 1.0 }
+	} else {
+		// QV logic: if user wanted 1 vote, they pay 1 credit.
+		// If they wanted 2 votes, they pay 4 credits.
+		// In our system, weight is effectively votes * multiplier.
+		v.Weight = v.Weight * core.CalculateVotesFromCredits(power)
+	}
+
+	// 2. Propagate to P2P
+	if err := s.Veilid.CastDAOVoteP2P(v); err != nil {
+		fmt.Printf("Veilid P2P vote propagation failed: %v\n", err)
+	}
+
+	// 3. Persist locally
+	if err := s.Storage.CastDAOVote(&v); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "voted",
+		"weight_applied": fmt.Sprintf("%.2f", v.Weight),
+	})
 }

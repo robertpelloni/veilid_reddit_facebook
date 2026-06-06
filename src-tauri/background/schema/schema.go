@@ -36,3 +36,33 @@ type Message struct {
 	Timestamp time.Time `json:"timestamp"`
 	Signature string    `json:"signature,omitempty"`
 }
+
+// DAOProposal represents a governance proposal in the P2P network.
+type DAOProposal struct {
+	ID         string         `json:"id"`
+	Title      string         `json:"title"`
+	Abstract   string         `json:"abstract"`
+	ProposerID string         `json:"proposer_id"`
+	Status     string         `json:"status"`
+	VotesFor   float64        `json:"votes_for"`
+	VotesAgainst float64      `json:"votes_against"`
+	CreatedAt  time.Time      `json:"created_at"`
+}
+
+// DAOVote represents a single signed vote on a proposal.
+type DAOVote struct {
+	ProposalID string  `json:"proposal_id"`
+	VoterID    string  `json:"voter_id"`
+	Weight     float64 `json:"weight"`
+	Signature  string  `json:"signature"`
+}
+
+// Comment represents a decentralized comment on a post.
+type Comment struct {
+	ID        string    `json:"id"`
+	PostID    string    `json:"post_id"`
+	AuthorID  string    `json:"author_id"`
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
+	Signature string    `json:"signature,omitempty"`
+}
