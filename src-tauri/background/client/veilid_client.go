@@ -10,11 +10,15 @@ import (
 )
 
 type VeilidClient struct {
-	RPCAddr string
+	RPCAddr        string
+	ProtocolString string
 }
 
 func NewVeilidClient(rpcAddr string) *VeilidClient {
-	return &VeilidClient{RPCAddr: rpcAddr}
+	return &VeilidClient{
+		RPCAddr:        rpcAddr,
+		ProtocolString: "veilid-reddit-myspace-v1",
+	}
 }
 
 type RPCRequest struct {

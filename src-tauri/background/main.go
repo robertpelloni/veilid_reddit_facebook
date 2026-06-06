@@ -29,9 +29,11 @@ func main() {
 	var dataDir string
 	var port string
 	var encryptKey string
+	var isTestnet bool
 	flag.StringVar(&dataDir, "data-dir", ".", "Directory for SQLite database and cache")
 	flag.StringVar(&port, "port", DefaultSidecarPort, "Port for the sidecar HTTP API")
 	flag.StringVar(&encryptKey, "encrypt-key", "", "Master key for database encryption (Simulated)")
+	flag.BoolVar(&isTestnet, "testnet", false, "Enable testnet mode with isolated protocol string")
 	flag.Parse()
 
 	if encryptKey != "" {
@@ -49,6 +51,10 @@ func main() {
 
 	// In a real scenario, we'd read the Veilid RPC address from a config or env
 	v := client.NewVeilidClient("http://localhost:5959")
+	if isTestnet {
+		v.ProtocolString = "veilid-reddit-myspace-v1-testnet"
+		fmt.Println("Testnet mode enabled.")
+	}
 
 	state := &AppState{
 		Veilid:  v,
