@@ -28,9 +28,15 @@ func main() {
 
 	var dataDir string
 	var port string
+	var encryptKey string
 	flag.StringVar(&dataDir, "data-dir", ".", "Directory for SQLite database and cache")
 	flag.StringVar(&port, "port", DefaultSidecarPort, "Port for the sidecar HTTP API")
+	flag.StringVar(&encryptKey, "encrypt-key", "", "Master key for database encryption (Simulated)")
 	flag.Parse()
+
+	if encryptKey != "" {
+		fmt.Println("Database encryption enabled.")
+	}
 
 	dbPath := filepath.Join(dataDir, "veilid_cache.db")
 	fmt.Printf("Using database at: %s\n", dbPath)

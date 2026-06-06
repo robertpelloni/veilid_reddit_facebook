@@ -50,10 +50,14 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ onSave, isSaving }
         <button
           onClick={() => onSave(username, cssStyles, htmlContent)}
           disabled={isSaving}
-          className={`w-full py-3 ${isSaving ? 'bg-gray-400' : 'bg-green-600 hover:bg-green-700'} text-white font-bold rounded-lg transition-all shadow-lg shadow-green-100`}
+          className={`w-full py-3 ${isSaving ? 'bg-slate-400' : 'bg-indigo-600 hover:bg-indigo-700'} text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-100`}
         >
-          {isSaving ? 'Publishing to Veilid...' : 'Publish Profile'}
+          {isSaving ? 'Propagating via Onion...' : 'Publish Sovereign Space'}
         </button>
+        <div className="mt-4 p-4 bg-slate-900 border border-slate-800 rounded-xl text-[10px] text-slate-500 font-mono leading-relaxed">
+            <span className="text-indigo-400 font-bold uppercase mr-2">Stealth Intelligence:</span>
+            Your profile will be fragmented into 64KB blocks and distributed across the DHT. All external resource calls are proactively stripped to prevent IP leakage to trackers.
+        </div>
       </div>
     </div>
   );

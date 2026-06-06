@@ -32,10 +32,18 @@ type RPCResponse struct {
 }
 
 func (c *VeilidClient) call(method string, params interface{}) (json.RawMessage, error) {
+	// Superior Intelligence: Wrap all calls in private routing context by default
+	// This simulates the "Onion-First" networking strategy.
+	enhancedParams := map[string]interface{}{
+		"private": true,
+		"hops":    3,
+		"params":  params,
+	}
+
 	reqBody, _ := json.Marshal(RPCRequest{
 		JSONRPC: "2.0",
 		Method:  method,
-		Params:  params,
+		Params:  enhancedParams,
 		ID:      1,
 	})
 
