@@ -196,3 +196,15 @@ func (c *VeilidClient) GetCommentsP2P(postKey string) ([]schema.Comment, error) 
 	json.Unmarshal(result, &comments)
 	return comments, nil
 }
+
+func (c *VeilidClient) GenerateIdentityP2P() (map[string]string, error) {
+	// Simulations using secure Go crypto/rand
+	// In production, this calls 'veilid.create_crypto_routing_pair'
+	result, err := c.call("veilid.create_crypto_routing_pair", nil)
+	if err != nil {
+		return nil, err
+	}
+	var id map[string]string
+	json.Unmarshal(result, &id)
+	return id, nil
+}

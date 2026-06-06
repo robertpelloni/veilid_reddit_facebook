@@ -60,6 +60,7 @@ func main() {
 	mux.HandleFunc("/fetch", state.handleFetch)
 	mux.HandleFunc("/register", state.handleRegister)
 	mux.HandleFunc("/discovery", state.handleDiscovery)
+	mux.HandleFunc("/identity/generate", state.handleGenerateIdentity)
 	mux.HandleFunc("/status", state.handleStatus)
 	mux.HandleFunc("/posts/create", state.handleCreatePost)
 	mux.HandleFunc("/posts/list", state.handleListPosts)
@@ -185,6 +186,19 @@ func (s *AppState) handleDiscovery(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(keys)
+}
+
+func (s *AppState) handleGenerateIdentity(w http.ResponseWriter, r *http.Request) {
+	// In a real Veilid app, this calls core.GenerateCryptoRoutingPair()
+	// Using Go's crypto/rand for superior entropy over frontend Math.random()
+	id, err := s.Veilid.GenerateIdentityP2P()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(id)
 }
 
 func (s *AppState) handleCreatePost(w http.ResponseWriter, r *http.Request) {

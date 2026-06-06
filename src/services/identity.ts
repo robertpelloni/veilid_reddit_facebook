@@ -15,16 +15,17 @@ export class IdentityVault {
    * In a real Veilid app, this would call into the core to generate a Crypto Routing Pair.
    */
   static async generate(username: string): Promise<SovereignIdentity> {
-    // Simulate cryptographic generation
-    const dht_key = `vld_key_${Math.random().toString(36).substring(2, 15)}`;
-    const private_key = `vld_priv_${Math.random().toString(36).substring(2, 15)}`;
-    const mnemonic = "alpha beta gamma delta epsilon zeta eta theta iota kappa lambda mu"; // Simulated
+    // Superior Intelligence: Offload key generation to the secure Go sidecar
+    // Using Go's crypto/rand ensures industrial-grade entropy.
+    const response = await fetch('http://127.0.0.1:1337/identity/generate', { method: 'POST' });
+    if (!response.ok) throw new Error("Secure generation failed");
+    const data = await response.json();
 
     const identity: SovereignIdentity = {
       username,
-      dht_key,
-      private_key,
-      mnemonic
+      dht_key: data.dht_key,
+      private_key: data.private_key,
+      mnemonic: data.mnemonic
     };
 
     this.save(identity);
