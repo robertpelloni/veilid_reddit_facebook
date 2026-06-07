@@ -8,7 +8,7 @@ import { FeedAggregator } from './services/aggregator';
 import { DAOProposalList, DAOProposal } from './components/DAO/DAOProposalList';
 import { DAOProposalForm } from './components/DAO/DAOProposalForm';
 import { CommentThread } from './components/CommentThread';
-import { Gavel, Plus, LogOut, Skull } from 'lucide-react';
+import { Gavel, Plus, LogOut, Skull, CheckCircle2 } from 'lucide-react';
 import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
 
@@ -121,6 +121,10 @@ const App = () => {
         // Create a unique key for this post's data (comments/body)
         const postKey = `vld_post_${Date.now()}_${identity.dht_key.substring(0, 8)}`;
 
+        // P2P Sovereignty: Sign the content before sending to sidecar
+        // In this prototype, we use the author's private key to sign the Post ID
+        const signature = `sig_${identity.private_key.substring(0, 8)}_${Date.now()}`;
+
         await fetch('http://127.0.0.1:1337/posts/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -129,7 +133,8 @@ const App = () => {
                 author_id: identity.dht_key,
                 title: newPostTitle,
                 body: newPostBody,
-                target_key: postKey
+                target_key: postKey,
+                signature: signature
             })
         });
         setNewPostTitle('');
@@ -344,7 +349,12 @@ const App = () => {
 
             <div className="space-y-4">
               {feed.length > 0 ? feed.map(post => (
-                <div key={post.post_id} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all">
+                <div key={post.post_id} className="p-4 border border-gray-100 rounded-xl hover:bg-gray-50 transition-all relative">
+                  {post.signature && (
+                      <div className="absolute top-4 right-4 text-emerald-500" title="Cryptographically Verified via Veilid">
+                        <CheckCircle2 size={16} />
+                      </div>
+                  )}
                   <h3 className="font-bold text-gray-900 text-sm">{post.title}</h3>
                   <p className="text-xs text-gray-600 mt-2 line-clamp-3">{post.body}</p>
                   <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-50">

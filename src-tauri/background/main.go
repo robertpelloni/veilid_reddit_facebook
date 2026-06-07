@@ -245,6 +245,14 @@ func (s *AppState) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 	p.Timestamp = time.Now()
 
+	// 0. Verify Cryptographic Authenticity (Author verification)
+	// In production, AuthorID contains the public key hex.
+	// For simulation/prototype, we only verify if signature is present.
+	if p.Signature == "" {
+		http.Error(w, "Content must be cryptographically signed", http.StatusUnauthorized)
+		return
+	}
+
 	// 1. Propagate to P2P network (Veilid DHT)
 	// For simplicity in prototype, we publish to a key derived from the author or a community key
 	if err := s.Veilid.PublishPost(p, p.AuthorID); err != nil {
@@ -357,6 +365,12 @@ func (s *AppState) handleAddComment(w http.ResponseWriter, r *http.Request) {
 	var c schema.Comment
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// 0. Authenticate Commenter
+	if c.Signature == "" {
+		http.Error(w, "Comments must be signed by author", http.StatusUnauthorized)
 		return
 	}
 

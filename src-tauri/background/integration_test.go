@@ -156,6 +156,7 @@ func TestIntegrationAPI(t *testing.T) {
 			ID:      "cmt1",
 			PostID:  "post123",
 			Content: "This is a P2P comment",
+			Signature: "mock_sig",
 		}
 		body, _ := json.Marshal(comment)
 		req := httptest.NewRequest("POST", "/comments/add", bytes.NewBuffer(body))

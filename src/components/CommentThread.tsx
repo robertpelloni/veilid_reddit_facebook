@@ -14,6 +14,8 @@ interface CommentThreadProps {
   myId: string;
 }
 
+import { IdentityVault } from '../services/identity';
+
 export const CommentThread: React.FC<CommentThreadProps> = ({ postId, myId }) => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -36,6 +38,10 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ postId, myId }) =>
     setLoading(true);
 
     try {
+      const id = await IdentityVault.get();
+      if (!id) return;
+      const signature = `sig_cmt_${id.private_key.substring(0, 8)}_${Date.now()}`;
+
       await fetch('http://127.0.0.1:1337/comments/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,7 +50,8 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ postId, myId }) =>
           post_id: postId,
           author_id: myId,
           content: newComment,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          signature: signature
         })
       });
       setNewComment('');
