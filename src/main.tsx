@@ -5,12 +5,14 @@ import { ProfileContainer } from './components/ProfileContainer';
 import { ProfileEditor } from './components/ProfileEditor';
 import { NetworkStatus } from './components/NetworkStatus';
 import { FeedAggregator } from './services/aggregator';
-import { DAOProposalList, DAOProposal } from './components/DAO/DAOProposalList';
+import { DAOProposalList } from './components/DAO/DAOProposalList';
 import { DAOProposalForm } from './components/DAO/DAOProposalForm';
 import { CommentThread } from './components/CommentThread';
-import { Gavel, Plus, LogOut, Skull, CheckCircle2 } from 'lucide-react';
+import { Gavel, Plus, LogOut, Skull, CheckCircle2, Download } from 'lucide-react';
 import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
+import { useDiscovery } from './hooks/useDiscovery';
+import { useDAO } from './hooks/useDAO';
 
 const aggregator = new FeedAggregator();
 const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
@@ -22,31 +24,20 @@ const App = () => {
   const [feedback, setFeedback] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [discoveredKeys, setDiscoveredKeys] = useState<any[]>([]);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostBody, setNewPostBody] = useState('');
-  const [daoProposals, setDAOProposals] = useState<DAOProposal[]>([]);
-  const [showProposalForm, setShowProposalForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'social' | 'dao'>('social');
 
   const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>(null);
 
-  const fetchDiscovery = async () => {
-    try {
-      const resp = await fetch('http://127.0.0.1:1337/discovery');
-      if (resp.ok) {
-        const data = await resp.json();
-        setDiscoveredKeys(data || []);
-      }
-    } catch (e) { console.error(e); }
-  };
-
-  const fetchDAOProposals = async () => {
-    try {
-        const resp = await fetch('http://127.0.0.1:1337/dao/proposals');
-        if (resp.ok) setDAOProposals(await resp.json());
-    } catch (e) { console.error(e); }
-  };
+  const { discoveredKeys, fetchDiscovery } = useDiscovery();
+  const {
+    daoProposals,
+    showProposalForm,
+    setShowProposalForm,
+    fetchDAOProposals,
+    handleVote
+  } = useDAO();
 
   useEffect(() => {
     IdentityVault.get().then(savedId => {
@@ -70,7 +61,6 @@ const App = () => {
 
   const handleSubscribe = async () => {
     aggregator.subscribe(newKey);
-    // Attempt to fetch and view the profile of the key we just subscribed to
     try {
       setFeedbackStatus('Fetching profile...');
       const response = await fetch(`http://127.0.0.1:1337/fetch?key=${newKey}`);
@@ -118,11 +108,7 @@ const App = () => {
   const handleCreatePost = async () => {
     if (!identity || !newPostTitle) return;
     try {
-        // Create a unique key for this post's data (comments/body)
         const postKey = `vld_post_${Date.now()}_${identity.dht_key.substring(0, 8)}`;
-
-        // P2P Sovereignty: Sign the content before sending to sidecar
-        // In this prototype, we use the author's private key to sign the Post ID
         const signature = `sig_${identity.private_key.substring(0, 8)}_${Date.now()}`;
 
         await fetch('http://127.0.0.1:1337/posts/create', {
@@ -145,7 +131,6 @@ const App = () => {
 
   const handleSaveProfile = async (username: string, css: string, html: string) => {
     setIsSavingProfile(true);
-    console.log('Publishing profile for:', username);
     try {
       const response = await fetch('http://127.0.0.1:1337/publish', {
         method: 'POST',
@@ -154,21 +139,18 @@ const App = () => {
           username,
           myspace_schema: {
             theme_css_base64: css,
-            html_content: html // Adjusting schema slightly for prototype
+            html_content: html
           }
         })
       });
       if (!response.ok) throw new Error('Publish failed');
       const data = await response.json();
-      // Identity updated in Vault via save call inside generate (if we re-generate)
-      // For handleSaveProfile, we just update the DHT key locally if it changed
       if (identity) {
           const updated = { ...identity, dht_key: data.dht_key };
           setIdentity(updated);
           await IdentityVault.save(updated);
       }
 
-      // Automatically register for discovery
       await fetch('http://127.0.0.1:1337/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -185,26 +167,25 @@ const App = () => {
     }
   };
 
-  const handleVote = async (id: string, weight: number) => {
-    if (!identity) return;
-    try {
-        await fetch('http://127.0.0.1:1337/dao/vote', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                proposal_id: id,
-                voter_id: identity.dht_key,
-                weight
-            })
-        });
-        fetchDAOProposals();
-    } catch (e) { console.error(e); }
-  };
-
   const handlePanic = () => {
       IdentityVault.clear();
       setIdentity(null);
       window.location.reload();
+  };
+
+  const handleExportIdentity = async () => {
+    try {
+      const data = await IdentityVault.exportToBinary();
+      const blob = new Blob([data], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `veilid_identity_${identity?.username}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("Export failed");
+    }
   };
 
   if (!identity) {
@@ -258,6 +239,13 @@ const App = () => {
                 >
                     {identity.dht_key}
                 </div>
+                <button
+                  onClick={handleExportIdentity}
+                  title="Export Identity Backup"
+                  className="text-gray-400 hover:text-blue-500 transition-colors"
+                >
+                    <Download size={18} />
+                </button>
                 <button onClick={() => { IdentityVault.clear(); setIdentity(null); }} className="text-gray-400 hover:text-red-500 transition-colors">
                     <LogOut size={18} />
                 </button>
@@ -315,7 +303,7 @@ const App = () => {
                       />
                   )}
 
-                  <DAOProposalList proposals={daoProposals} onVote={handleVote} />
+                  <DAOProposalList proposals={daoProposals} onVote={(id, weight) => handleVote(identity.dht_key, id, weight)} />
               </section>
           )}
         </div>
