@@ -14,9 +14,17 @@ Testers should configure their local `veilid-core` to use the following bootstra
 Testnet nodes are isolated from production and staging via the application protocol string:
 - **Protocol String:** `veilid-reddit-myspace-v1-testnet`
 
+## Launching in Testnet Mode
+To join the testnet, launch the background sidecar with the `-testnet` flag. This will automatically switch the network to the isolated protocol string and prioritize testnet bootstrap nodes.
+
+```bash
+./src-tauri/bin/sidecar-<arch> -testnet
+```
+
 ## Testing Guidelines
-1.  **Peer Discovery:** Check the "Network Status" header to ensure you have connected to at least 3 peers.
-2.  **DHT Propagation:** Publish your profile and have a peer on a different network fetch it using your Identity Key.
+1.  **Verify Mode:** Ensure the "Testnet v1.1.0" badge is visible in the application header.
+2.  **Peer Discovery:** Check the "Network Status" header to ensure you have connected to at least 3 peers.
+3.  **DHT Propagation:** Publish your profile and have a peer on a different network fetch it using your Identity Key.
 3.  **Messaging Latency:** Send real-time messages and log the time between "sent" and "received" states across different geographical regions.
 
 ## Known Issues (Testnet)

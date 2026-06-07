@@ -29,9 +29,11 @@ func main() {
 	var dataDir string
 	var port string
 	var encryptKey string
+	var isTestnet bool
 	flag.StringVar(&dataDir, "data-dir", ".", "Directory for SQLite database and cache")
 	flag.StringVar(&port, "port", DefaultSidecarPort, "Port for the sidecar HTTP API")
 	flag.StringVar(&encryptKey, "encrypt-key", "", "Master key for database encryption (Simulated)")
+	flag.BoolVar(&isTestnet, "testnet", false, "Enable testnet mode with isolated protocol string")
 	flag.Parse()
 
 	if encryptKey != "" {
@@ -49,6 +51,10 @@ func main() {
 
 	// In a real scenario, we'd read the Veilid RPC address from a config or env
 	v := client.NewVeilidClient("http://localhost:5959")
+	if isTestnet {
+		v.ProtocolString = "veilid-reddit-myspace-v1-testnet"
+		fmt.Println("Testnet mode enabled.")
+	}
 
 	state := &AppState{
 		Veilid:  v,
@@ -73,9 +79,9 @@ func main() {
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Restrict to Tauri development and production origins
+		// Restrict to Tauri development and production origins (including staging)
 		origin := r.Header.Get("Origin")
-		if origin == "http://localhost:5173" || origin == "tauri://localhost" {
+		if origin == "http://localhost:5173" || origin == "http://localhost:5174" || origin == "tauri://localhost" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")

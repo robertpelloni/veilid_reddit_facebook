@@ -13,6 +13,7 @@ import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
 
 const aggregator = new FeedAggregator();
+const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
 
 const App = () => {
   const [identity, setIdentity] = useState<SovereignIdentity | null>(null);
@@ -87,10 +88,28 @@ const App = () => {
     aggregator.fetchFeed().then(setFeed);
   };
 
-  const handleFeedbackSubmit = () => {
-    console.log('Feedback submitted:', feedback);
-    setFeedbackStatus('Feedback sent successfully! (Simulated)');
-    setFeedback('');
+  const handleFeedbackSubmit = async () => {
+    if (!feedback || !identity) return;
+    setFeedbackStatus('Sending P2P feedback...');
+    try {
+        await fetch('http://127.0.0.1:1337/message/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: `feedback-${Date.now()}`,
+                sender_id: identity.dht_key,
+                recipient_id: DEV_FEEDBACK_KEY,
+                content: feedback,
+                kind: 'text',
+                is_encrypted: true,
+                timestamp: new Date().toISOString()
+            })
+        });
+        setFeedbackStatus('Feedback delivered via Onion!');
+        setFeedback('');
+    } catch (e) {
+        setFeedbackStatus('Failed to send P2P message');
+    }
     setTimeout(() => setFeedbackStatus(''), 3000);
   };
 
@@ -185,7 +204,10 @@ const App = () => {
       <header className="mb-10 border-b pb-6 flex justify-between items-center">
         <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Veilid Reddit MySpace</h1>
+            <div className="flex items-center gap-4">
+                <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Veilid Reddit MySpace</h1>
+                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded uppercase tracking-wider border border-amber-200">Testnet v1.1.0</span>
+            </div>
             <div className="flex items-center gap-4 mt-2">
                 <p className="text-gray-600">Decentralized, Serverless, Sovereign Social Fabric</p>
                 <NetworkStatus />
@@ -373,8 +395,13 @@ const App = () => {
         </aside>
       </main>
 
-      <footer className="mt-20 border-t pt-8 text-center text-gray-400 text-xs">
+      <footer className="mt-20 border-t pt-8 text-center text-gray-400 text-xs pb-10">
         <p>© 2024 Veilid Reddit MySpace • The P2P Revolution is Here</p>
+        <div className="mt-4 flex justify-center gap-6">
+            <a href="https://github.com/robertpelloni/veilid_reddit_facebook/issues" target="_blank" className="hover:text-blue-500 underline decoration-gray-300">Report Bug</a>
+            <a href="#" className="hover:text-blue-500 underline decoration-gray-300">Testnet Documentation</a>
+            <span className="text-amber-500 font-medium">Warning: Experimental Network</span>
+        </div>
       </footer>
     </div>
   );

@@ -1,5 +1,3 @@
-import { invoke } from '@tauri-apps/api/tauri';
-
 export interface SovereignIdentity {
   username: string;
   dht_key: string;
