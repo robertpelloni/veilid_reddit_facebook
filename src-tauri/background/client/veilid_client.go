@@ -155,7 +155,16 @@ func (c *VeilidClient) CastDAOVoteP2P(v schema.DAOVote) error {
 }
 
 func (c *VeilidClient) PublishPost(p schema.PostHeader, subredditKey string) error {
-	data, _ := json.Marshal(p)
+	// First fetch existing posts
+	posts, _ := c.FetchPostsP2P(subredditKey)
+	posts = append([]schema.PostHeader{p}, posts...) // Newest first
+
+	// Keep only last 50 posts for prototype performance
+	if len(posts) > 50 {
+		posts = posts[:50]
+	}
+
+	data, _ := json.Marshal(posts)
 	_, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
 		"key":   subredditKey,
 		"value": data,
@@ -173,7 +182,11 @@ func (c *VeilidClient) FetchPostsP2P(subredditKey string) ([]schema.PostHeader, 
 
 	var posts []schema.PostHeader
 	if err := json.Unmarshal(result, &posts); err != nil {
-		// If it's a single post or malformed, return empty or handle
+		// If it's not an array, it might be an old single post or empty
+		var single schema.PostHeader
+		if err2 := json.Unmarshal(result, &single); err2 == nil {
+			return []schema.PostHeader{single}, nil
+		}
 		return []schema.PostHeader{}, nil
 	}
 	return posts, nil
@@ -211,4 +224,14 @@ func (c *VeilidClient) GenerateIdentityP2P() (map[string]string, error) {
 	var id map[string]string
 	json.Unmarshal(result, &id)
 	return id, nil
+}
+
+func (c *VeilidClient) GetStatus() (map[string]interface{}, error) {
+	result, err := c.call("veilid.get_status", nil)
+	if err != nil {
+		return nil, err
+	}
+	var status map[string]interface{}
+	json.Unmarshal(result, &status)
+	return status, nil
 }
