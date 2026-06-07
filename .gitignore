@@ -1,0 +1,22 @@
+node_modules
+dist
+.vite
+
+# Logs
+*.log
+
+# SQLite
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Binaries
+bin/
+src-tauri/bin/
+src-tauri/target/
+
+# OS files
+.DS_Store
+Thumbs.db
+release/
