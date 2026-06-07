@@ -116,6 +116,9 @@ const App = () => {
   const handleCreatePost = async () => {
     if (!identity || !newPostTitle) return;
     try {
+        // Create a unique key for this post's data (comments/body)
+        const postKey = `vld_post_${Date.now()}_${identity.dht_key.substring(0, 8)}`;
+
         await fetch('http://127.0.0.1:1337/posts/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -123,7 +126,7 @@ const App = () => {
                 post_id: `post-${Date.now()}`,
                 author_id: identity.dht_key,
                 title: newPostTitle,
-                target_key: 'TODO'
+                target_key: postKey
             })
         });
         setNewPostTitle('');

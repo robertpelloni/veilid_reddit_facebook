@@ -254,16 +254,19 @@ func (s *AppState) handleListPosts(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *AppState) handleStatus(w http.ResponseWriter, r *http.Request) {
-	// Mocking network status
-	status := map[string]interface{}{
-		"connected_peers": 42,
-		"node_id":         "vld_node_88888888",
-		"dht_size":        123456,
-		"protocol":        "Veilid v0.1.0",
+	// Fetch real network status from Veilid
+	resp, err := s.Veilid.GetStatus()
+	if err != nil {
+		// Fallback to reasonable defaults if offline/mocked
+		resp = map[string]interface{}{
+			"connected_peers": 0,
+			"node_id":         "offline",
+			"protocol":        s.Veilid.ProtocolString,
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(status)
+	json.NewEncoder(w).Encode(resp)
 }
 
 func (s *AppState) handleSendMessage(w http.ResponseWriter, r *http.Request) {
