@@ -14,13 +14,22 @@ func TestVeilidClient_PublishProfile(t *testing.T) {
 		var req RPCRequest
 		json.NewDecoder(r.Body).Decode(&req)
 
-		if req.Method != "veilid.routing_context_set_dht_value" {
-			t.Errorf("Expected method veilid.routing_context_set_dht_value, got %s", req.Method)
+		var res interface{}
+		switch req.Method {
+		case "veilid.new_routing_context":
+			res = "ctx_123"
+		case "veilid.routing_context_set_dht_value":
+			res = "dht_key_123"
+		case "veilid.routing_context_close":
+			res = nil
+		default:
+			t.Errorf("Unexpected method: %s", req.Method)
 		}
 
+		result, _ := json.Marshal(res)
 		resp := RPCResponse{
 			JSONRPC: "2.0",
-			Result:  json.RawMessage(`"dht_key_123"`),
+			Result:  result,
 			ID:      req.ID,
 		}
 		json.NewEncoder(w).Encode(resp)
@@ -44,14 +53,20 @@ func TestVeilidClient_FetchProfile(t *testing.T) {
 		var req RPCRequest
 		json.NewDecoder(r.Body).Decode(&req)
 
-		if req.Method != "veilid.routing_context_get_dht_value" {
-			t.Errorf("Expected method veilid.routing_context_get_dht_value, got %s", req.Method)
+		var res interface{}
+		switch req.Method {
+		case "veilid.new_routing_context":
+			res = "ctx_123"
+		case "veilid.routing_context_get_dht_value":
+			registry := schema.ProfileRegistry{Username: "testuser"}
+			res, _ = json.Marshal(registry)
+		case "veilid.routing_context_close":
+			res = nil
+		default:
+			t.Errorf("Unexpected method: %s", req.Method)
 		}
 
-		registry := schema.ProfileRegistry{Username: "testuser"}
-		registryData, _ := json.Marshal(registry)
-		result, _ := json.Marshal(registryData)
-
+		result, _ := json.Marshal(res)
 		resp := RPCResponse{
 			JSONRPC: "2.0",
 			Result:  result,

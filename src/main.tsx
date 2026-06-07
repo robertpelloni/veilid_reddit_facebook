@@ -48,14 +48,15 @@ const App = () => {
   };
 
   useEffect(() => {
-    const savedId = IdentityVault.get();
-    if (savedId) {
-        setIdentity(savedId);
-        setViewingProfile({
-            css: `body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`,
-            html: `<h1>${savedId.username}'s Sovereign Profile</h1><p>I own my data. No central server. No trackers. Just P2P.</p><div style="background: #f6f7f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd;"><strong>Current Status:</strong> Building the decentralized future.</div>`
-        });
-    }
+    IdentityVault.get().then(savedId => {
+        if (savedId) {
+            setIdentity(savedId);
+            setViewingProfile({
+                css: `body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`,
+                html: `<h1>${savedId.username}'s Sovereign Profile</h1><p>I own my data. No central server. No trackers. Just P2P.</p><div style="background: #f6f7f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd;"><strong>Current Status:</strong> Building the decentralized future.</div>`
+            });
+        }
+    });
   }, []);
 
   useEffect(() => {
@@ -156,7 +157,7 @@ const App = () => {
       if (identity) {
           const updated = { ...identity, dht_key: data.dht_key };
           setIdentity(updated);
-          IdentityVault.save(updated);
+          await IdentityVault.save(updated);
       }
 
       // Automatically register for discovery
