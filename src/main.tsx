@@ -13,6 +13,7 @@ import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
 
 const aggregator = new FeedAggregator();
+const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
 
 const App = () => {
   const [identity, setIdentity] = useState<SovereignIdentity | null>(null);
@@ -87,10 +88,28 @@ const App = () => {
     aggregator.fetchFeed().then(setFeed);
   };
 
-  const handleFeedbackSubmit = () => {
-    console.log('Feedback submitted:', feedback);
-    setFeedbackStatus('Feedback sent successfully! (Simulated)');
-    setFeedback('');
+  const handleFeedbackSubmit = async () => {
+    if (!feedback || !identity) return;
+    setFeedbackStatus('Sending P2P feedback...');
+    try {
+        await fetch('http://127.0.0.1:1337/message/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: `feedback-${Date.now()}`,
+                sender_id: identity.dht_key,
+                recipient_id: DEV_FEEDBACK_KEY,
+                content: feedback,
+                kind: 'text',
+                is_encrypted: true,
+                timestamp: new Date().toISOString()
+            })
+        });
+        setFeedbackStatus('Feedback delivered via Onion!');
+        setFeedback('');
+    } catch (e) {
+        setFeedbackStatus('Failed to send P2P message');
+    }
     setTimeout(() => setFeedbackStatus(''), 3000);
   };
 
