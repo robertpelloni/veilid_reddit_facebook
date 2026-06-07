@@ -11,7 +11,8 @@ export const ProfileContainer: React.FC<ProfileProps> = ({ cssStyles, htmlConten
     return str
         .replace(/url\(['"]?http[^'"]+['"]?\)/gi, 'url(about:blank)') // Strip external CSS images
         .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Strip scripts just in case
-        .replace(/on\w+="[^"]*"/gi, ''); // Strip inline event handlers
+        .replace(/on\w+="[^"]*"/gi, '') // Strip inline event handlers
+        .replace(/\bsrc=["'][^"]+["']/gi, 'src="about:blank"'); // Strip tracking pixels/images
   };
 
   const cleanCSS = sanitize(cssStyles);

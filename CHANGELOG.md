@@ -1,6 +1,6 @@
 # CHANGELOG.md
 
-## [1.1.0] - 2026-06-06
+## [1.1.0-prod] - 2026-06-07
 ### Added
 - **Sidecar-naming Protocol**: Standardized Go sidecar binary naming for cross-platform Tauri compatibility.
 - **DAO Integration**: Full governance engine ported to native Go core, featuring Quadratic Voting and Liquid Delegation.

@@ -6,7 +6,7 @@
 - [x] Secure MySpace-style profile sandboxing.
 - [x] Local SQLite discovery hub.
 
-## Phase 2: Decentralized Interaction (COMPLETED)
+## Phase 2: Decentralized Interaction (COMPLETED v1.1.0-prod)
 - [x] **Real-time Messaging**: Implemented P2P messaging using Veilid `AppMessage` protocol.
 - [x] **DAO Integration**: Ported governance engine to native Go core (QV, Delegation).
 - [x] **Multi-Writer DHT Comments**: Implemented decentralized comment system for every post.
