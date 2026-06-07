@@ -19,8 +19,8 @@ export const SovereignOnboarding: React.FC<AuthProps> = ({ onAuthenticated }) =>
     setIsGenerating(false);
   };
 
-  const handleFinish = () => {
-    const id = IdentityVault.get();
+  const handleFinish = async () => {
+    const id = await IdentityVault.get();
     if (id) onAuthenticated(id);
   };
 

@@ -35,19 +35,24 @@ type RPCResponse struct {
 	ID      int             `json:"id"`
 }
 
-func (c *VeilidClient) call(method string, params interface{}) (json.RawMessage, error) {
-	// Superior Intelligence: Wrap all calls in private routing context by default
-	// This simulates the "Onion-First" networking strategy.
-	enhancedParams := map[string]interface{}{
-		"private": true,
-		"hops":    3,
-		"params":  params,
+// setupRoutingContext establishes a private 3-hop onion routing context.
+func (c *VeilidClient) setupRoutingContext() (string, error) {
+	resp, err := c.rawCall("veilid.new_routing_context", nil)
+	if err != nil {
+		return "", err
 	}
+	var ctxID string
+	if err := json.Unmarshal(resp, &ctxID); err != nil {
+		return "", err
+	}
+	return ctxID, nil
+}
 
+func (c *VeilidClient) rawCall(method string, params interface{}) (json.RawMessage, error) {
 	reqBody, _ := json.Marshal(RPCRequest{
 		JSONRPC: "2.0",
 		Method:  method,
-		Params:  enhancedParams,
+		Params:  params,
 		ID:      1,
 	})
 
@@ -69,6 +74,25 @@ func (c *VeilidClient) call(method string, params interface{}) (json.RawMessage,
 	return rpcResp.Result, nil
 }
 
+func (c *VeilidClient) call(method string, params map[string]interface{}) (json.RawMessage, error) {
+	ctxID, err := c.setupRoutingContext()
+	if err != nil {
+		return nil, fmt.Errorf("context setup failed: %v", err)
+	}
+
+	if params == nil {
+		params = make(map[string]interface{})
+	}
+	params["routing_context"] = ctxID
+
+	res, err := c.rawCall(method, params)
+
+	// Best effort cleanup
+	c.rawCall("veilid.routing_context_close", map[string]string{"routing_context": ctxID})
+
+	return res, err
+}
+
 func (c *VeilidClient) PublishProfile(registry schema.ProfileRegistry) (string, error) {
 	data, err := json.Marshal(registry)
 	if err != nil {
@@ -76,6 +100,7 @@ func (c *VeilidClient) PublishProfile(registry schema.ProfileRegistry) (string, 
 	}
 
 	result, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
+		"key":   registry.PublicSigningKey, // Use key-specific storage
 		"value": data,
 	})
 	if err != nil {
@@ -113,7 +138,7 @@ func (c *VeilidClient) FetchProfile(dhtKey string) (*schema.ProfileRegistry, err
 
 func (c *VeilidClient) SendMessage(msg schema.Message) error {
 	data, _ := json.Marshal(msg)
-	_, err := c.call("veilid.app_message", map[string]interface{}{
+	_, err := c.call("veilid.routing_context_app_message", map[string]interface{}{
 		"target": msg.Recipient,
 		"data":   data,
 	})
@@ -121,7 +146,7 @@ func (c *VeilidClient) SendMessage(msg schema.Message) error {
 }
 
 func (c *VeilidClient) GetMessages() ([]schema.Message, error) {
-	result, err := c.call("veilid.get_app_messages", nil)
+	result, err := c.call("veilid.routing_context_get_app_messages", nil)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +207,6 @@ func (c *VeilidClient) FetchPostsP2P(subredditKey string) ([]schema.PostHeader, 
 
 	var posts []schema.PostHeader
 	if err := json.Unmarshal(result, &posts); err != nil {
-		// If it's not an array, it might be an old single post or empty
 		var single schema.PostHeader
 		if err2 := json.Unmarshal(result, &single); err2 == nil {
 			return []schema.PostHeader{single}, nil
@@ -194,7 +218,6 @@ func (c *VeilidClient) FetchPostsP2P(subredditKey string) ([]schema.PostHeader, 
 
 func (c *VeilidClient) PublishComment(cmt schema.Comment, postKey string) error {
 	data, _ := json.Marshal(cmt)
-	// Multi-writer DHT: every post has a target key for comments
 	_, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
 		"key":   postKey,
 		"value": data,
@@ -215,8 +238,6 @@ func (c *VeilidClient) GetCommentsP2P(postKey string) ([]schema.Comment, error) 
 }
 
 func (c *VeilidClient) GenerateIdentityP2P() (map[string]string, error) {
-	// Simulations using secure Go crypto/rand
-	// In production, this calls 'veilid.create_crypto_routing_pair'
 	result, err := c.call("veilid.create_crypto_routing_pair", nil)
 	if err != nil {
 		return nil, err
@@ -227,7 +248,8 @@ func (c *VeilidClient) GenerateIdentityP2P() (map[string]string, error) {
 }
 
 func (c *VeilidClient) GetStatus() (map[string]interface{}, error) {
-	result, err := c.call("veilid.get_status", nil)
+	// Status doesn't usually need a routing context, so we call raw
+	result, err := c.rawCall("veilid.get_status", nil)
 	if err != nil {
 		return nil, err
 	}
