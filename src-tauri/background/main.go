@@ -79,9 +79,9 @@ func main() {
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Restrict to Tauri development and production origins
+		// Restrict to Tauri development and production origins (including staging)
 		origin := r.Header.Get("Origin")
-		if origin == "http://localhost:5173" || origin == "tauri://localhost" {
+		if origin == "http://localhost:5173" || origin == "http://localhost:5174" || origin == "tauri://localhost" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
