@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/ed25519"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -68,8 +70,10 @@ func TestIntegrationAPI(t *testing.T) {
 	})
 
 	t.Run("Publish Profile", func(t *testing.T) {
+		pub, _, _ := ed25519.GenerateKey(nil)
 		profile := schema.ProfileRegistry{
 			Username: "TestUser",
+			PublicSigningKey: hex.EncodeToString(pub),
 			MySpaceSchema: schema.MySpaceLayout{
 				ThemeCSSBase64: "Ym9keSB7IGNvbG9yOiByZWQ7IH0=", // "body { color: red; }"
 			},
@@ -152,11 +156,18 @@ func TestIntegrationAPI(t *testing.T) {
 	})
 
 	t.Run("Comments API", func(t *testing.T) {
+		// Need a real public key (hex) and signature for the test
+		pub, priv, _ := ed25519.GenerateKey(nil)
+		authorID := hex.EncodeToString(pub)
+		content := "This is a P2P comment"
+		sig := ed25519.Sign(priv, []byte(content))
+
 		comment := schema.Comment{
 			ID:      "cmt1",
 			PostID:  "post123",
-			Content: "This is a P2P comment",
-			Signature: "mock_sig",
+			AuthorID: authorID,
+			Content: content,
+			Signature: hex.EncodeToString(sig),
 		}
 		body, _ := json.Marshal(comment)
 		req := httptest.NewRequest("POST", "/comments/add", bytes.NewBuffer(body))
@@ -164,7 +175,7 @@ func TestIntegrationAPI(t *testing.T) {
 		state.handleAddComment(rr, req)
 
 		if rr.Code != http.StatusOK {
-			t.Errorf("Add comment failed: %d", rr.Code)
+			t.Errorf("Add comment failed: %d %s", rr.Code, rr.Body.String())
 		}
 	})
 }

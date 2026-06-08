@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Send } from 'lucide-react';
+import { MessageSquare, Send, CheckCircle2 } from 'lucide-react';
 
 interface Comment {
   id: string;
@@ -7,6 +7,7 @@ interface Comment {
   author_id: string;
   content: string;
   timestamp: string;
+  signature?: string;
 }
 
 interface CommentThreadProps {
@@ -40,7 +41,17 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ postId, myId }) =>
     try {
       const id = await IdentityVault.get();
       if (!id) return;
-      const signature = `sig_cmt_${id.private_key.substring(0, 8)}_${Date.now()}`;
+
+      // 1. Get real Ed25519 signature from sidecar
+      const signResp = await fetch('http://127.0.0.1:1337/identity/sign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            private_key: id.private_key,
+            message: newComment
+        })
+      });
+      const { signature } = await signResp.json();
 
       await fetch('http://127.0.0.1:1337/comments/add', {
         method: 'POST',
@@ -70,10 +81,18 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ postId, myId }) =>
 
       <div className="space-y-3 mb-4">
         {comments.map(c => (
-          <div key={c.id} className="bg-gray-50 p-3 rounded-lg text-sm">
+          <div key={c.id} className="bg-gray-50 p-3 rounded-lg text-sm relative group">
+            {c.signature && (
+                <div className="absolute top-2 right-2 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" title="Verified Signature">
+                    <CheckCircle2 size={12} />
+                </div>
+            )}
             <p className="text-gray-800">{c.content}</p>
             <div className="flex justify-between mt-1">
-                <span className="text-[10px] text-gray-400 font-mono">{c.author_id.substring(0, 12)}...</span>
+                <div className="flex items-center gap-1">
+                    <span className="text-[10px] text-gray-400 font-mono">{c.author_id.substring(0, 12)}...</span>
+                    {c.signature && <span className="text-[8px] text-emerald-600 font-bold uppercase tracking-tighter">Verified</span>}
+                </div>
                 <span className="text-[10px] text-gray-400">{new Date(c.timestamp).toLocaleTimeString()}</span>
             </div>
           </div>

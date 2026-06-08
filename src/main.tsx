@@ -109,7 +109,17 @@ const App = () => {
     if (!identity || !newPostTitle) return;
     try {
         const postKey = `vld_post_${Date.now()}_${identity.dht_key.substring(0, 8)}`;
-        const signature = `sig_${identity.private_key.substring(0, 8)}_${Date.now()}`;
+
+        // 1. Get real Ed25519 signature from sidecar
+        const signResp = await fetch('http://127.0.0.1:1337/identity/sign', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                private_key: identity.private_key,
+                message: newPostTitle + newPostBody
+            })
+        });
+        const { signature } = await signResp.json();
 
         await fetch('http://127.0.0.1:1337/posts/create', {
             method: 'POST',

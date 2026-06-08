@@ -68,6 +68,7 @@ func main() {
 	mux.HandleFunc("/discovery", state.handleDiscovery)
 	mux.HandleFunc("/identity/generate", state.handleGenerateIdentity)
 	mux.HandleFunc("/identity/import", state.handleImportIdentity)
+	mux.HandleFunc("/identity/sign", state.handleSignMessage)
 	mux.HandleFunc("/status", state.handleStatus)
 	mux.HandleFunc("/posts/create", state.handleCreatePost)
 	mux.HandleFunc("/posts/list", state.handleListPosts)
@@ -208,6 +209,33 @@ func (s *AppState) handleGenerateIdentity(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(id)
 }
 
+func (s *AppState) handleSignMessage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var req struct {
+		PrivateKey string `json:"private_key"`
+		Message    string `json:"message"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// In a real Veilid app, this would use the private key to sign the message
+	// For our implementation, we'll delegate to a client method that simulates or uses real Ed25519
+	signature, err := s.Veilid.SignMessageP2P(req.PrivateKey, req.Message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"signature": signature})
+}
+
 func (s *AppState) handleImportIdentity(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "POST required", http.StatusMethodNotAllowed)
@@ -246,10 +274,15 @@ func (s *AppState) handleCreatePost(w http.ResponseWriter, r *http.Request) {
 	p.Timestamp = time.Now()
 
 	// 0. Verify Cryptographic Authenticity (Author verification)
-	// In production, AuthorID contains the public key hex.
-	// For simulation/prototype, we only verify if signature is present.
+	// AuthorID contains the public key hex derived from the DHT key.
 	if p.Signature == "" {
 		http.Error(w, "Content must be cryptographically signed", http.StatusUnauthorized)
+		return
+	}
+	// Verify signature against (Title + Body)
+	valid, err := core.VerifySignature(p.AuthorID, p.Signature, []byte(p.Title+p.Body))
+	if err != nil || !valid {
+		http.Error(w, "Cryptographic signature verification failed", http.StatusUnauthorized)
 		return
 	}
 
@@ -371,6 +404,12 @@ func (s *AppState) handleAddComment(w http.ResponseWriter, r *http.Request) {
 	// 0. Authenticate Commenter
 	if c.Signature == "" {
 		http.Error(w, "Comments must be signed by author", http.StatusUnauthorized)
+		return
+	}
+	// Verify signature against (Content)
+	valid, err := core.VerifySignature(c.AuthorID, c.Signature, []byte(c.Content))
+	if err != nil || !valid {
+		http.Error(w, "Cryptographic signature verification failed", http.StatusUnauthorized)
 		return
 	}
 

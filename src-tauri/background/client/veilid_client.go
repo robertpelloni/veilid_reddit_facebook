@@ -2,6 +2,8 @@ package client
 
 import (
 	"bytes"
+	"crypto/ed25519"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -245,6 +247,20 @@ func (c *VeilidClient) GenerateIdentityP2P() (map[string]string, error) {
 	var id map[string]string
 	json.Unmarshal(result, &id)
 	return id, nil
+}
+
+func (c *VeilidClient) SignMessageP2P(privateKeyHex string, message string) (string, error) {
+	privKey, err := hex.DecodeString(privateKeyHex)
+	if err != nil {
+		return "", fmt.Errorf("invalid private key: %v", err)
+	}
+
+	if len(privKey) != ed25519.PrivateKeySize {
+		return "", fmt.Errorf("invalid private key size")
+	}
+
+	sig := ed25519.Sign(privKey, []byte(message))
+	return hex.EncodeToString(sig), nil
 }
 
 func (c *VeilidClient) ImportIdentityP2P(mnemonic string) (map[string]string, error) {
