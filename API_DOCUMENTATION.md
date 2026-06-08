@@ -108,6 +108,56 @@ Retrieves all pending real-time messages for the local node.
 ]
 ```
 
+### 8. POST `/identity/generate`
+Generates a new sovereign identity (ED25519) using high-entropy random generation.
+
+**Response:** `200 OK`
+```json
+{
+  "dht_key": "vld_key_...",
+  "private_key": "...",
+  "mnemonic": "..."
+}
+```
+
+### 9. POST `/identity/import`
+Imports an existing sovereign identity from a BIP-39 mnemonic.
+
+**Request Body:**
+```json
+{ "mnemonic": "..." }
+```
+
+### 10. POST `/posts/create`
+Creates and signs a new post, propagating it to the Veilid DHT.
+
+**Request Body:**
+```json
+{
+  "post_id": "...",
+  "author_id": "...",
+  "title": "...",
+  "body": "...",
+  "target_key": "...",
+  "signature": "..."
+}
+```
+
+### 11. GET `/posts/list?key=<SUBREDDIT_KEY>`
+Retrieves and aggregates the latest 50 posts from a specific subreddit key.
+
+### 12. POST `/comments/add`
+Adds a cryptographically signed comment to a specific post.
+
+### 13. GET `/comments/list?post_id=<POST_ID>`
+Fetches all P2P comments associated with a specific post.
+
+### 14. GET/POST `/dao/proposals`
+Lists all governance proposals or publishes a new one.
+
+### 15. POST `/dao/vote`
+Casts a weighted vote on a proposal using Quadratic Voting logic.
+
 ## P2P Interaction Details
 The sidecar uses the following Veilid JSON-RPC methods for network operations:
 - `veilid.routing_context_set_dht_value`: Used to publish signed profile registries to the DHT.
