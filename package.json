@@ -1,6 +1,6 @@
 {
   "name": "veilid-reddit-myspace",
-  "version": "1.1.0-testnet",
+  "version": "1.1.0-prod",
   "private": true,
   "scripts": {
     "dev": "vite",
