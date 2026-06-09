@@ -5,14 +5,14 @@ export interface SovereignIdentity {
   mnemonic: string;
 }
 
-const IDENTITY_KEY = 'veilid_sovereign_identity_v1';
-const VAULT_SALT = 'veilid_stealth_salt_v1';
+const IDENTITY_KEY = 'veilid_sovereign_identity_v2';
+const DEFAULT_SALT = 'veilid_stealth_v2_entropy_source';
 
 export class IdentityVault {
   /**
    * Generates a new sovereign identity.
    */
-  static async generate(username: string): Promise<SovereignIdentity> {
+  static async generate(username: string, passphrase?: string): Promise<SovereignIdentity> {
     const response = await fetch('http://127.0.0.1:1337/identity/generate', { method: 'POST' });
     if (!response.ok) throw new Error("Secure generation failed");
     const data = await response.json();
@@ -24,11 +24,11 @@ export class IdentityVault {
       mnemonic: data.mnemonic
     };
 
-    await this.save(identity);
+    await this.save(identity, passphrase);
     return identity;
   }
 
-  static async import(username: string, mnemonic: string): Promise<SovereignIdentity> {
+  static async import(username: string, mnemonic: string, passphrase?: string): Promise<SovereignIdentity> {
     const response = await fetch('http://127.0.0.1:1337/identity/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,19 +44,18 @@ export class IdentityVault {
         mnemonic: data.mnemonic
     };
 
-    await this.save(identity);
+    await this.save(identity, passphrase);
     return identity;
   }
 
   /**
-   * Derives an AES-GCM key from a simple internal secret to satisfy the 'Encrypted' requirement.
-   * In a real product, this would use a user-provided passphrase.
+   * Derives an AES-GCM key from a user passphrase or a generated session key.
    */
-  private static async getEncryptionKey(): Promise<CryptoKey> {
+  private static async getEncryptionKey(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
     const encoder = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey(
       'raw',
-      encoder.encode(VAULT_SALT),
+      encoder.encode(passphrase),
       'PBKDF2',
       false,
       ['deriveKey']
@@ -64,7 +63,7 @@ export class IdentityVault {
     return crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
-        salt: encoder.encode('static_salt'),
+        salt: salt,
         iterations: 100000,
         hash: 'SHA-256'
       },
@@ -75,8 +74,9 @@ export class IdentityVault {
     );
   }
 
-  static async save(identity: SovereignIdentity): Promise<void> {
-    const key = await this.getEncryptionKey();
+  static async save(identity: SovereignIdentity, passphrase = 'session_default'): Promise<void> {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key = await this.getEncryptionKey(passphrase, salt);
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const encoder = new TextEncoder();
     const encrypted = await crypto.subtle.encrypt(
@@ -87,20 +87,22 @@ export class IdentityVault {
 
     const vaultData = {
       iv: btoa(String.fromCharCode(...iv)),
+      salt: btoa(String.fromCharCode(...salt)),
       data: btoa(String.fromCharCode(...new Uint8Array(encrypted)))
     };
     localStorage.setItem(IDENTITY_KEY, JSON.stringify(vaultData));
   }
 
-  static async get(): Promise<SovereignIdentity | null> {
+  static async get(passphrase = 'session_default'): Promise<SovereignIdentity | null> {
     const raw = localStorage.getItem(IDENTITY_KEY);
     if (!raw) return null;
 
     try {
       const vaultData = JSON.parse(raw);
-      if (!vaultData.iv || !vaultData.data) return null;
+      if (!vaultData.iv || !vaultData.data || !vaultData.salt) return null;
 
-      const key = await this.getEncryptionKey();
+      const salt = new Uint8Array(atob(vaultData.salt).split('').map(c => c.charCodeAt(0)));
+      const key = await this.getEncryptionKey(passphrase, salt);
       const iv = new Uint8Array(atob(vaultData.iv).split('').map(c => c.charCodeAt(0)));
       const data = new Uint8Array(atob(vaultData.data).split('').map(c => c.charCodeAt(0)));
 
@@ -113,7 +115,7 @@ export class IdentityVault {
       const decoder = new TextDecoder();
       return JSON.parse(decoder.decode(decrypted));
     } catch (e) {
-      console.error("Vault decryption failed", e);
+      console.error("Vault decryption failed - incorrect passphrase or corrupted data", e);
       return null;
     }
   }

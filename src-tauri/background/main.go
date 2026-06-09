@@ -7,13 +7,13 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
-
 	"time"
 
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/client"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/core"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/schema"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/storage"
+	"github.com/robertpelloni/bobcoin/go-lattice"
 )
 
 const DefaultSidecarPort = "1337"
@@ -21,6 +21,7 @@ const DefaultSidecarPort = "1337"
 type AppState struct {
 	Veilid  *client.VeilidClient
 	Storage *storage.SQLiteStorage
+	Lattice *lattice.Lattice
 }
 
 func main() {
@@ -49,6 +50,15 @@ func main() {
 	}
 	defer s.Close()
 
+	// Initialize Bobcoin Lattice
+	bobDBPath := filepath.Join(dataDir, "bobcoin.db")
+	bobDB := lattice.NewDBManager(bobDBPath)
+	defer bobDB.Close()
+	l := lattice.NewLattice(bobDB)
+	if err := l.AuditState(); err != nil {
+		fmt.Printf("Bobcoin Lattice Audit failed: %v. Starting fresh.\n", err)
+	}
+
 	// In a real scenario, we'd read the Veilid RPC address from a config or env
 	v := client.NewVeilidClient("http://localhost:5959")
 	if isTestnet {
@@ -59,6 +69,7 @@ func main() {
 	state := &AppState{
 		Veilid:  v,
 		Storage: s,
+		Lattice: l,
 	}
 
 	mux := http.NewServeMux()
@@ -78,6 +89,9 @@ func main() {
 	mux.HandleFunc("/dao/vote", state.handleDAOVote)
 	mux.HandleFunc("/comments/add", state.handleAddComment)
 	mux.HandleFunc("/comments/list", state.handleListComments)
+	mux.HandleFunc("/bobcoin/balance", state.handleBobcoinBalance)
+	mux.HandleFunc("/bobcoin/transfer", state.handleBobcoinTransfer)
+	mux.HandleFunc("/bobcoin/faucet", state.handleBobcoinFaucet)
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -466,6 +480,19 @@ func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+    // 0. Verify Signature
+    if v.Signature == "" {
+        http.Error(w, "Votes must be cryptographically signed", http.StatusUnauthorized)
+        return
+    }
+    // Verify against proposalID + voterID + weight
+    message := fmt.Sprintf("%s:%s:%.2f", v.ProposalID, v.VoterID, v.Weight)
+    valid, err := core.VerifySignature(v.VoterID, v.Signature, []byte(message))
+    if err != nil || !valid {
+        http.Error(w, "DAO Vote signature verification failed", http.StatusUnauthorized)
+        return
+    }
+
 	// 1. Calculate weighted power using Liquid Delegation core logic
 	power, err := core.CalculateEffectivePower(s.Storage, v.VoterID, "general")
 	if err != nil {
@@ -476,6 +503,16 @@ func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {
 		// If they wanted 2 votes, they pay 4 credits.
 		// In our system, weight is effectively votes * multiplier.
 		v.Weight = v.Weight * core.CalculateVotesFromCredits(power)
+	}
+
+	// 1.5 Factor in Bobcoin Trust Score (NOT balance)
+	if b58Account, err := core.HexToBase58(v.VoterID); err == nil {
+		trust := s.Lattice.GetTrustScore(b58Account)
+		// Trust score ranges from 0-100, default 100.
+		// We use it as a percentage multiplier: trust/100.0
+		trustMultiplier := trust / 100.0
+		v.Weight = v.Weight * trustMultiplier
+		fmt.Printf("[DAO] Applied Bobcoin Trust Multiplier: %.2f (Score: %.2f) for %s\n", trustMultiplier, trust, b58Account)
 	}
 
 	// 2. Propagate to P2P

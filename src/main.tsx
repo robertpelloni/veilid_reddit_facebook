@@ -8,11 +8,14 @@ import { FeedAggregator } from './services/aggregator';
 import { DAOProposalList } from './components/DAO/DAOProposalList';
 import { DAOProposalForm } from './components/DAO/DAOProposalForm';
 import { CommentThread } from './components/CommentThread';
-import { Gavel, Plus, LogOut, Skull, CheckCircle2, Download } from 'lucide-react';
+import { TipButton } from './components/TipButton';
+import { WalletTab } from './components/WalletTab';
+import { Gavel, Plus, LogOut, Skull, CheckCircle2, Download, Wallet, ShieldCheck, Coins } from 'lucide-react';
 import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
 import { useDiscovery } from './hooks/useDiscovery';
 import { useDAO } from './hooks/useDAO';
+import { useBobcoin } from './hooks/useBobcoin';
 
 const aggregator = new FeedAggregator();
 const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
@@ -26,7 +29,7 @@ const App = () => {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [newPostTitle, setNewPostTitle] = useState('');
   const [newPostBody, setNewPostBody] = useState('');
-  const [activeTab, setActiveTab] = useState<'social' | 'dao'>('social');
+  const [activeTab, setActiveTab] = useState<'social' | 'dao' | 'wallet'>('social');
 
   const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>(null);
 
@@ -38,6 +41,8 @@ const App = () => {
     fetchDAOProposals,
     handleVote
   } = useDAO();
+
+  const { balance, trust, fetchBalance } = useBobcoin(identity?.dht_key);
 
   useEffect(() => {
     IdentityVault.get().then(savedId => {
@@ -216,7 +221,7 @@ const App = () => {
                 <NetworkStatus />
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
               <button
                 onClick={() => setActiveTab('social')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'social' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
@@ -231,6 +236,13 @@ const App = () => {
                   Governance DAO
               </button>
               <button
+                onClick={() => setActiveTab('wallet')}
+                className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all ${activeTab === 'wallet' ? 'bg-amber-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
+              >
+                  <Coins size={16} />
+                  Wallet & Economy
+              </button>
+              <button
                 onClick={handlePanic}
                 title="Panic: Destructive Logout"
                 className="px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 font-bold text-sm"
@@ -238,6 +250,18 @@ const App = () => {
                   <Skull size={16} />
                   Panic
               </button>
+
+              <div className="ml-4 flex items-center gap-4 bg-white border border-gray-200 px-4 py-2 rounded-lg shadow-sm">
+                  <div className="flex items-center gap-2 text-blue-600" title="Your Bobcoin Balance">
+                      <Wallet size={16} />
+                      <span className="font-bold text-sm">{balance.toFixed(2)} BOB</span>
+                  </div>
+                  <div className="w-px h-4 bg-gray-200" />
+                  <div className="flex items-center gap-2 text-emerald-600" title={`Bobcoin Trust Score: ${trust}/100. Influences DAO voting weight.`}>
+                      <ShieldCheck size={16} />
+                      <span className="font-bold text-sm">{trust.toFixed(0)}</span>
+                  </div>
+              </div>
           </div>
         </div>
         <div className="text-right group relative">
@@ -270,7 +294,9 @@ const App = () => {
 
       <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
         <div className="lg:col-span-8 space-y-10">
-          {activeTab === 'social' ? (
+          {activeTab === 'wallet' ? (
+              <WalletTab account={identity.dht_key} balance={balance} trust={trust} onRefresh={fetchBalance} />
+          ) : activeTab === 'social' ? (
               <>
                 <section>
                     <h2 className="text-2xl font-bold mb-4 text-gray-800">Sovereign Profile Preview</h2>
@@ -356,7 +382,10 @@ const App = () => {
                   <h3 className="font-bold text-gray-900 text-sm">{post.title}</h3>
                   <p className="text-xs text-gray-600 mt-2 line-clamp-3">{post.body}</p>
                   <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-50">
-                    <p className="text-[10px] text-gray-400">By: <span className="font-mono text-blue-500">{post.author_id.substring(0, 12)}...</span></p>
+                    <div className="flex items-center gap-3">
+                        <p className="text-[10px] text-gray-400">By: <span className="font-mono text-blue-500">{post.author_id.substring(0, 12)}...</span></p>
+                        <TipButton recipientAccount={post.author_id} senderAccount={identity.dht_key} onSuccess={fetchBalance} />
+                    </div>
                     <span className="text-[9px] text-gray-300 font-mono">{new Date(post.timestamp).toLocaleDateString()}</span>
                   </div>
 
@@ -404,7 +433,7 @@ const App = () => {
               />
               <button
                 onClick={handleSubscribe}
-                className="w-full py-3 bg-white text-blue-600 font-bold rounded-lg hover:bg-blue-50 transition-all shadow-md"
+                className="w-full py-3 bg-white text-blue-600 font-bold rounded-lg hover:bg-blue transition-all shadow-md"
               >
                 Subscribe
               </button>
