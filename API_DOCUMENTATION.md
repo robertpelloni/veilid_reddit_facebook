@@ -158,6 +158,15 @@ Lists all governance proposals or publishes a new one.
 ### 15. POST `/dao/vote`
 Casts a weighted vote on a proposal using Quadratic Voting logic.
 
+### 16. GET `/bobcoin/balance?account=<DHT_KEY>`
+Retrieves the current Bobcoin balance and Trust Score for an account.
+
+### 17. POST `/bobcoin/transfer`
+Processes a signed Bobcoin transfer block.
+
+### 18. GET `/bobcoin/faucet?account=<DHT_KEY>`
+Requests simulated testnet funds (1000 BOB) for an account.
+
 ## P2P Interaction Details
 The sidecar uses the following Veilid JSON-RPC methods for network operations:
 - `veilid.routing_context_set_dht_value`: Used to publish signed profile registries to the DHT.
