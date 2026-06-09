@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { IdentityVault, SovereignIdentity } from '../services/identity';
-import { Shield, Lock, Key, Ghost } from 'lucide-react';
+import { Shield, Lock, Ghost } from 'lucide-react';
 
 interface AuthProps {
   onAuthenticated: (id: SovereignIdentity) => void;

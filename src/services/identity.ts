@@ -6,12 +6,8 @@ export interface SovereignIdentity {
 }
 
 const IDENTITY_KEY = 'veilid_sovereign_identity_v2';
-const DEFAULT_SALT = 'veilid_stealth_v2_entropy_source';
 
 export class IdentityVault {
-  /**
-   * Generates a new sovereign identity.
-   */
   static async generate(username: string, passphrase?: string): Promise<SovereignIdentity> {
     const response = await fetch('http://127.0.0.1:1337/identity/generate', { method: 'POST' });
     if (!response.ok) throw new Error("Secure generation failed");
@@ -48,9 +44,6 @@ export class IdentityVault {
     return identity;
   }
 
-  /**
-   * Derives an AES-GCM key from a user passphrase or a generated session key.
-   */
   private static async getEncryptionKey(passphrase: string, salt: Uint8Array): Promise<CryptoKey> {
     const encoder = new TextEncoder();
     const keyMaterial = await crypto.subtle.importKey(
@@ -63,7 +56,7 @@ export class IdentityVault {
     return crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
-        salt: salt,
+        salt: salt.buffer as ArrayBuffer,
         iterations: 100000,
         hash: 'SHA-256'
       },
@@ -115,7 +108,7 @@ export class IdentityVault {
       const decoder = new TextDecoder();
       return JSON.parse(decoder.decode(decrypted));
     } catch (e) {
-      console.error("Vault decryption failed - incorrect passphrase or corrupted data", e);
+      console.error("Vault decryption failed", e);
       return null;
     }
   }
