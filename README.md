@@ -15,6 +15,9 @@ Unlike traditional social networks, there are no central servers, no trackers, a
 - **Secure Sandboxing:** User-provided styles and content are rendered in a strictly isolated, null-origin environment to ensure total security.
 - **Decentralized Discovery:** Find and subscribe to other sovereign subreddits via a local registry and P2P discovery hub.
 - **Real-time P2P Messaging:** Send and receive private messages directly between nodes using the Veilid AppMessage protocol.
+- **DAO Governance:** Participate in community-driven governance with built-in Quadratic Voting and Liquid Delegation logic.
+- **Bobcoin Integration:** Use Bobcoin as the de facto decentralized currency for tipping, social rewards, and economic interoperability.
+- **Onion-First Privacy:** All network operations use 3-hop onion routing by default, ensuring your IP address remains private.
 - **Local-First Architecture:** All your data, subscriptions, and cached feeds stay on your device in a secure SQLite database.
 
 ---
@@ -44,7 +47,7 @@ The CI/CD pipeline (GitHub Actions) automatically handles multi-platform builds 
 ## 🛠️ Quick Start
 
 ### Prerequisites
-- [Go v1.22+](https://golang.org/dl/) (Requires CGO and a C compiler like GCC)
+- [Go v1.25+](https://golang.org/dl/) (Required for Bobcoin Lattice integration)
 - [Node.js v20+](https://nodejs.org/)
 - [Rust & Cargo](https://rustup.rs/) (For Tauri and Veilid)
 - [Veilid Core](https://veilid.com/download/) (Must be running locally or accessible via network)

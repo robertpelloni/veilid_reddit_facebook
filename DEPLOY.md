@@ -9,9 +9,10 @@ chmod +x setup-env.sh
 ```
 
 - **Rust/Cargo:** Required for `veilid-core` and Tauri.
-- **Go v1.22+:** Required for the background sidecar. (Requires CGO and a C compiler like GCC or Clang for SQLite support).
+- **Go v1.25+:** Required for the background sidecar and Bobcoin Lattice integration. (Requires CGO and a C compiler like GCC or Clang for SQLite support).
 - **Node.js & npm/pnpm:** Required for the React frontend.
 - **Veilid Core:** Must be running locally or accessible via network for real-time P2P operations.
+- **Bobcoin Submodule:** Integrated as a core library for the decentralized economic layer.
 
 ## Local Development
 1. Install dependencies:
@@ -23,7 +24,8 @@ chmod +x setup-env.sh
    ```bash
    # Example for x86_64 Linux
    mkdir -p src-tauri/bin
-   go build -o src-tauri/bin/sidecar-x86_64-unknown-linux-gnu ./src-tauri/background/main.go
+   # Note: Include bobcoin_handlers.go and other sidecar source files
+   go build -o src-tauri/bin/sidecar-x86_64-unknown-linux-gnu ./src-tauri/background/*.go
    ```
 3. Start the application:
    ```bash
@@ -38,7 +40,7 @@ For production, use the release flags for both the sidecar and the Tauri shell. 
 ```bash
 # Build Go sidecar with stripping and optimizations
 TARGET_TRIPLE=$(rustc -Vv | grep host | cut -d ' ' -f 2)
-go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
+go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/*.go
 
 # Build Tauri Production Bundle
 npm run tauri build
@@ -57,7 +59,7 @@ npm run tauri build
 
 The build process generates two primary artifacts that must be distributed together:
 
-1.  **Go Sidecar:** Located in `src-tauri/bin/sidecar-<target>`. This is the P2P engine.
+1.  **Go Sidecar:** Located in `src-tauri/bin/sidecar-<target>`. This is the P2P engine, now including the integrated Bobcoin economic layer.
 2.  **Tauri App Bundle:** Located in `src-tauri/target/release/bundle/`. This includes the React UI and the shell logic to launch the sidecar.
 
 ### Multi-Node Distribution

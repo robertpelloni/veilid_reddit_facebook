@@ -1,33 +1,24 @@
 # Submodule Analysis Report - Veilid Reddit MySpace
 
 ## Executive Summary
-This report analyzes the repository structure of the Veilid-powered social network for submodule usage. The project was audited for Git submodules, external gitlinks, and nested repository metadata.
+This report analyzes the repository structure of the Veilid-powered social network for submodule usage.
 
 ## Findings
 
 ### 1. Git Submodule Audit
-- **Command:** `git submodule status --recursive`
-- **Result:** No submodules detected.
-- **Command:** `ls -a .gitmodules`
-- **Result:** No `.gitmodules` configuration file exists.
+- **Status:** Integrated.
+- **Submodule:** `bobcoin` (https://github.com/robertpelloni/bobcoin)
+- **Path:** `bobcoin/`
+- **Role:** Provides the de facto decentralized currency (Bobcoin) and Lattice consensus library for the monorepo.
 
-### 2. Gitlink (160000) Audit
-- **Command:** `git ls-files -s | grep "^160000"`
-- **Result:** No external gitlinks found in the index.
-
-### 3. Nested Repository Metadata
-- **Audit:** Searched for `.git` directories outside of the root.
-- **Result:** No nested repository metadata found.
+### 2. Integration Status
+The project utilizes a **Hybrid Monorepo** design. While `bobcoin` is tracked as a submodule, its Go components (`go-lattice`) are natively integrated into the sidecar's build pipeline via `go.mod` replacement.
 
 ## Architectural Architecture
-The project utilizes a **Unified Monorepo** design. All functional components are natively integrated as directories within the main repository:
-
 - **Background Sidecar (Go):** Integrated in `src-tauri/background`.
+- **Bobcoin Economy:** Submodule in `bobcoin/`, linked via `go-lattice`.
 - **Desktop Shell (Tauri/Rust):** Integrated in `src-tauri`.
 - **Frontend (React/TypeScript):** Integrated in `src`.
 
-## Redundancy and Implementation Status
-Since there are no submodules, all features are already fully implemented within the repository's main tracking branches. No submodule removal or further implementation instructions are required.
-
 ## Recommendation
-Maintain the current unified project structure to ensure atomic commits and simplified CI/CD orchestration across the Go, Rust, and TypeScript layers.
+Maintain the current structure to ensure mathematical parity between the social and economic layers while allowing independent updates to the Bobcoin core protocol.

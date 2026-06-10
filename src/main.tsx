@@ -10,7 +10,7 @@ import { DAOProposalForm } from './components/DAO/DAOProposalForm';
 import { CommentThread } from './components/CommentThread';
 import { TipButton } from './components/TipButton';
 import { WalletTab } from './components/WalletTab';
-import { Gavel, Plus, LogOut, Skull, CheckCircle2, Download, Wallet, ShieldCheck, Coins } from 'lucide-react';
+import { Gavel, Plus, LogOut, Skull, CheckCircle2, Download, Wallet, ShieldCheck, Coins, Key } from 'lucide-react';
 import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
 import { useDiscovery } from './hooks/useDiscovery';
@@ -22,6 +22,8 @@ const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
 
 const App = () => {
   const [identity, setIdentity] = useState<SovereignIdentity | null>(null);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [unlockPin, setUnlockPin] = useState('');
   const [feed, setFeed] = useState<any[]>([]);
   const [newKey, setNewKey] = useState('');
   const [feedback, setFeedback] = useState('');
@@ -44,17 +46,19 @@ const App = () => {
 
   const { balance, trust, fetchBalance } = useBobcoin(identity?.dht_key);
 
-  useEffect(() => {
-    IdentityVault.get().then(savedId => {
-        if (savedId) {
-            setIdentity(savedId);
-            setViewingProfile({
+  const handleUnlock = async () => {
+      const savedId = await IdentityVault.get(unlockPin || 'session_default');
+      if (savedId) {
+          setIdentity(savedId);
+          setIsUnlocked(true);
+          setViewingProfile({
                 css: `body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`,
                 html: `<h1>${savedId.username}'s Sovereign Profile</h1><p>I own my data. No central server. No trackers. Just P2P.</p><div style="background: #f6f7f9; padding: 15px; margin-top: 20px; border: 1px solid #ddd;"><strong>Current Status:</strong> Building the decentralized future.</div>`
-            });
-        }
-    });
-  }, []);
+          });
+      } else {
+          alert("Invalid Pin or Identity not found");
+      }
+  };
 
   useEffect(() => {
     if (identity) {
@@ -121,7 +125,7 @@ const App = () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 private_key: identity.private_key,
-                message: newPostTitle + newPostBody
+                message: newPostTitle + (newPostBody || '')
             })
         });
         const { signature } = await signResp.json();
@@ -133,7 +137,7 @@ const App = () => {
                 post_id: `post-${Date.now()}`,
                 author_id: identity.dht_key,
                 title: newPostTitle,
-                body: newPostBody,
+                body: newPostBody || '',
                 target_key: postKey,
                 signature: signature
             })
@@ -185,6 +189,7 @@ const App = () => {
   const handlePanic = () => {
       IdentityVault.clear();
       setIdentity(null);
+      setIsUnlocked(false);
       window.location.reload();
   };
 
@@ -203,18 +208,49 @@ const App = () => {
     }
   };
 
-  if (!identity) {
-      return <SovereignOnboarding onAuthenticated={setIdentity} />;
+  if (!identity || !isUnlocked) {
+      const hasVault = localStorage.getItem('veilid_sovereign_identity_v2');
+      if (hasVault) {
+          return (
+              <div className="max-w-md mx-auto mt-40 p-8 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl text-slate-100 text-center">
+                  <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-6 mx-auto">
+                    <Key size={32} />
+                  </div>
+                  <h1 className="text-2xl font-bold mb-2">Vault Locked</h1>
+                  <p className="text-slate-400 mb-8 text-sm">Enter your secure pin to unlock your sovereign identity.</p>
+                  <input
+                    type="password"
+                    value={unlockPin}
+                    onChange={(e) => setUnlockPin(e.target.value)}
+                    placeholder="Enter Vault Pin"
+                    className="w-full p-4 bg-slate-800 border border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition-all mb-4"
+                  />
+                  <button
+                    onClick={handleUnlock}
+                    className="w-full py-4 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all shadow-lg"
+                  >
+                    Unlock Identity
+                  </button>
+                  <button
+                    onClick={() => { IdentityVault.clear(); window.location.reload(); }}
+                    className="mt-6 text-slate-500 text-xs hover:text-red-400 transition-all underline"
+                  >
+                    Wipe local data and start fresh
+                  </button>
+              </div>
+          );
+      }
+      return <SovereignOnboarding onAuthenticated={(id) => { setIdentity(id); setIsUnlocked(true); }} />;
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto font-sans bg-gray-50 min-h-screen transition-all">
-      <header className="mb-10 border-b pb-6 flex justify-between items-center">
+    <div className="p-8 max-w-6xl mx-auto font-sans bg-gray-50 min-h-screen transition-all text-gray-900">
+      <header className="mb-10 border-b border-gray-200 pb-6 flex justify-between items-center">
         <div className="flex flex-col gap-4">
           <div>
             <div className="flex items-center gap-4">
                 <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight">Veilid Reddit MySpace</h1>
-                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded uppercase tracking-wider border border-amber-200">Testnet v1.1.0</span>
+                <span className="px-2 py-1 bg-amber-100 text-amber-700 text-[10px] font-bold rounded uppercase tracking-wider border border-amber-200">v1.1.0 Gold</span>
             </div>
             <div className="flex items-center gap-4 mt-2">
                 <p className="text-gray-600">Decentralized, Serverless, Sovereign Social Fabric</p>
@@ -280,7 +316,7 @@ const App = () => {
                 >
                     <Download size={18} />
                 </button>
-                <button onClick={() => { IdentityVault.clear(); setIdentity(null); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                <button onClick={() => { IdentityVault.clear(); setIdentity(null); setIsUnlocked(false); }} className="text-gray-400 hover:text-red-500 transition-colors">
                     <LogOut size={18} />
                 </button>
             </div>
@@ -461,7 +497,7 @@ const App = () => {
         </aside>
       </main>
 
-      <footer className="mt-20 border-t pt-8 text-center text-gray-400 text-xs pb-10">
+      <footer className="mt-20 border-t border-gray-200 pt-8 text-center text-gray-400 text-xs pb-10">
         <p>© 2024 Veilid Reddit MySpace • The P2P Revolution is Here</p>
         <div className="mt-4 flex justify-center gap-6">
             <a href="https://github.com/robertpelloni/veilid_reddit_facebook/issues" target="_blank" className="hover:text-blue-500 underline decoration-gray-300">Report Bug</a>

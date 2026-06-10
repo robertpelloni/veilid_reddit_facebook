@@ -1,9 +1,10 @@
 module github.com/robertpelloni/veilid_reddit_facebook
 
-go 1.26.1
+go 1.25.0
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.24
+	github.com/mr-tron/base58 v1.2.0
 	github.com/robertpelloni/bobcoin/go-lattice v0.0.0-00010101000000-000000000000
 )
 
@@ -12,7 +13,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	golang.org/x/sys v0.42.0 // indirect

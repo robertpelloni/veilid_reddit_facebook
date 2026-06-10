@@ -1,9 +1,11 @@
-interface PostHeader {
+export interface PostHeader {
   post_id: string;
   author_id: string;
   title: string;
+  body?: string;
   target_key: string;
   timestamp: string;
+  signature?: string;
 }
 
 export class FeedAggregator {
@@ -40,6 +42,8 @@ export class FeedAggregator {
 
             if (Array.isArray(userPosts)) {
                 allPosts.push(...userPosts);
+            } else if (userPosts && typeof userPosts === 'object') {
+                allPosts.push(userPosts);
             }
         } catch (e) {
             console.error(`Failed to aggregate posts from key ${key}:`, e);

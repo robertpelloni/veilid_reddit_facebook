@@ -8,7 +8,7 @@ TARGET_TRIPLE=$(rustc -Vv | grep host | cut -d ' ' -f 2)
 
 echo "--- Building Go Sidecar for $TARGET_TRIPLE ---"
 mkdir -p src-tauri/bin
-go build -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
+go build -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/*.go
 
 echo "--- Building Frontend ---"
 npm install
