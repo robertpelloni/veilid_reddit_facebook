@@ -56,6 +56,7 @@ The CI/CD pipeline (GitHub Actions) automatically handles multi-platform builds 
 1.  **Clone the Repository:**
     ```bash
     git clone https://github.com/robertpelloni/veilid_reddit_facebook.git
+    git submodule update --init --recursive
     cd veilid_reddit_facebook
     ```
 2.  **Install Dependencies:**

@@ -130,7 +130,7 @@ func (s *AppState) handlePublish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. Publish to Veilid (Mocked)
+	// 1. Publish to Veilid
 	dhtKey, err := s.Veilid.PublishProfile(registry)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Veilid error: %v", err), http.StatusInternalServerError)
@@ -162,7 +162,7 @@ func (s *AppState) handleFetch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. Fetch from Veilid (Mocked)
+	// 2. Fetch from Veilid
 	profile, err = s.Veilid.FetchProfile(dhtKey)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("Veilid error: %v", err), http.StatusNotFound)
