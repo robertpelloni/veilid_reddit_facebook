@@ -52,6 +52,7 @@ npm run tauri build
 - **Veilid Privacy:** Enable onion routing in `veilid-core` to protect node IP addresses.
 
 ### 3. Key Management
+- **Security:** User identities are encrypted in the browser with a mandatory PIN/Passphrase using AES-256-GCM. The vault must be unlocked on every application launch.
 - Sovereign identities are derived from Veilid Crypto Routing Pairs.
 - **Backup:** Identity keys are persisted in the browser's `localStorage` and the sidecar's SQLite cache. Use the "Export Identity" feature (see manual) for manual backups.
 

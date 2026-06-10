@@ -8,6 +8,7 @@ Welcome to the future of sovereign social networking. This guide will help you n
 When you open the application, the Go background service (the "sidecar") starts automatically. This service connects you to the Veilid P2P network.
 
 ### Your Sovereign Identity
+- **Vault Unlock:** On subsequent launches, you will be prompted to enter your Vault Pin. This decrypts your sovereign keys locally. Do not forget this pin, as there is no password reset mechanism in a decentralized network.
 On your first launch, a unique **Identity Key** is generated for you. This key represents your sovereign space on the network. You can find your key in the top right corner of the dashboard.
 - **Privacy Note:** Your key does not reveal your IP address or real-world identity.
 

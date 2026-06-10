@@ -7,28 +7,25 @@ on:
     branches: [ main ]
 
 jobs:
-  test-backend:
+  backend-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Go
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.25'
       - name: Run Go Tests
-        run: |
-          go mod tidy
-          cd src-tauri/background
-          go test -v ./...
+        run: go test -v ./src-tauri/background/...
 
-  test-frontend:
+  frontend-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
       - name: Install Dependencies
         run: npm install
       - name: Run Vitest
