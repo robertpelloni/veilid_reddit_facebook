@@ -5,11 +5,13 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
+	"github.com/robertpelloni/bobcoin/go-lattice"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/client"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/schema"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/storage"
@@ -55,9 +57,17 @@ func TestIntegrationAPI(t *testing.T) {
 
 	vClient := client.NewVeilidClient(server.URL)
 
+	// Setup mock lattice
+	bobDBPath := "test_bobcoin.db"
+	defer os.Remove(bobDBPath)
+	bobDB := lattice.NewDBManager(bobDBPath)
+	defer bobDB.Close()
+	l := lattice.NewLattice(bobDB)
+
 	state := &AppState{
 		Veilid:  vClient,
 		Storage: store,
+		Lattice: l,
 	}
 
 	t.Run("Status Endpoint", func(t *testing.T) {
@@ -176,6 +186,44 @@ func TestIntegrationAPI(t *testing.T) {
 
 		if rr.Code != http.StatusOK {
 			t.Errorf("Add comment failed: %d %s", rr.Code, rr.Body.String())
+		}
+	})
+
+	t.Run("DAO API", func(t *testing.T) {
+		// 1. Create Proposal
+		proposal := schema.DAOProposal{
+			ID:         "prop1",
+			Title:      "Test Proposal",
+			ProposerID: "voter1",
+		}
+		body, _ := json.Marshal(proposal)
+		req := httptest.NewRequest("POST", "/dao/proposals", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		state.handleDAOProposals(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Fatalf("Create proposal failed: %d", rr.Code)
+		}
+
+		// 2. Cast Vote (Signed)
+		pub, priv, _ := ed25519.GenerateKey(nil)
+		voterID := hex.EncodeToString(pub)
+		weight := 1.0
+		msg := fmt.Sprintf("%s:%s:%.2f", "prop1", voterID, weight)
+		sig := ed25519.Sign(priv, []byte(msg))
+
+		vote := schema.DAOVote{
+			ProposalID: "prop1",
+			VoterID:    voterID,
+			Weight:     weight,
+			Signature:  hex.EncodeToString(sig),
+		}
+		vBody, _ := json.Marshal(vote)
+		vReq := httptest.NewRequest("POST", "/dao/vote", bytes.NewBuffer(vBody))
+		vRR := httptest.NewRecorder()
+		state.handleDAOVote(vRR, vReq)
+
+		if vRR.Code != http.StatusOK {
+			t.Errorf("Cast vote failed: %d %s", vRR.Code, vRR.Body.String())
 		}
 	})
 }

@@ -167,7 +167,7 @@ const App = () => {
       if (identity) {
           const updated = { ...identity, dht_key: data.dht_key };
           setIdentity(updated);
-          await IdentityVault.save(updated);
+          await IdentityVault.save(updated, unlockPin || 'session_default');
       }
 
       await fetch('http://127.0.0.1:1337/register', {
