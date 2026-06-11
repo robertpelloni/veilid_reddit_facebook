@@ -226,4 +226,19 @@ func TestIntegrationAPI(t *testing.T) {
 			t.Errorf("Cast vote failed: %d %s", vRR.Code, vRR.Body.String())
 		}
 	})
+
+	t.Run("Bobcoin API", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/bobcoin/balance?account=6MREjxvyz8Np2XK59tj3A5CfcygemYjUn7NSnCrRN3Yv", nil)
+		rr := httptest.NewRecorder()
+		state.handleBobcoinBalance(rr, req)
+		if rr.Code != http.StatusOK {
+			t.Errorf("Balance check failed: %d", rr.Code)
+		}
+
+		var resp map[string]interface{}
+		json.Unmarshal(rr.Body.Bytes(), &resp)
+		if _, ok := resp["balance"]; !ok {
+			t.Error("Balance response missing 'balance' field")
+		}
+	})
 }
