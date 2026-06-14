@@ -16,6 +16,7 @@ interface CommentThreadProps {
 }
 
 import { IdentityVault } from '../services/identity';
+import { API_BASE } from '../config';
 
 export const CommentThread: React.FC<CommentThreadProps> = ({ postId, myId }) => {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -24,7 +25,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ postId, myId }) =>
 
   const fetchComments = async () => {
     try {
-      const resp = await fetch(`http://127.0.0.1:1337/comments/list?post_id=${postId}`);
+        const resp = await fetch(`${API_BASE}/comments/list?post_id=${postId}`);
       if (resp.ok) setComments(await resp.json() || []);
     } catch (e) { console.error(e); }
   };
@@ -43,7 +44,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ postId, myId }) =>
       if (!id) return;
 
       // 1. Get real Ed25519 signature from sidecar
-      const signResp = await fetch('http://127.0.0.1:1337/identity/sign', {
+      const signResp = await fetch(`${API_BASE}/identity/sign`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -53,7 +54,7 @@ export const CommentThread: React.FC<CommentThreadProps> = ({ postId, myId }) =>
       });
       const { signature } = await signResp.json();
 
-      await fetch('http://127.0.0.1:1337/comments/add', {
+      await fetch(`${API_BASE}/comments/add`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

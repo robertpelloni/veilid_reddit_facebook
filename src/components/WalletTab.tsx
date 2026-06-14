@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Wallet, RefreshCw, Send, ShieldCheck, History, ArrowRightLeft } from 'lucide-react';
 import { IdentityVault } from '../services/identity';
+import { API_BASE } from '../config';
 
 interface WalletTabProps {
     account: string;
@@ -28,7 +29,7 @@ export const WalletTab: React.FC<WalletTabProps> = ({ account, balance, trust, o
                 payload: { amount }
             };
 
-            const signResp = await fetch('http://127.0.0.1:1337/identity/sign', {
+            const signResp = await fetch(`${API_BASE}/identity/sign`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -38,7 +39,7 @@ export const WalletTab: React.FC<WalletTabProps> = ({ account, balance, trust, o
             });
             const { signature } = await signResp.json();
 
-            const resp = await fetch('http://127.0.0.1:1337/bobcoin/transfer', {
+            const resp = await fetch(`${API_BASE}/bobcoin/transfer`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -61,7 +62,7 @@ export const WalletTab: React.FC<WalletTabProps> = ({ account, balance, trust, o
 
     const handleFaucet = async () => {
         try {
-            await fetch(`http://127.0.0.1:1337/bobcoin/faucet?account=${account}`);
+            await fetch(`${API_BASE}/bobcoin/faucet?account=${account}`);
             onRefresh();
             alert("Requested 1000 BOB from Faucet (Simulated)");
         } catch (e) { console.error(e); }

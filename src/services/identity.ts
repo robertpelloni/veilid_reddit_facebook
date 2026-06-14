@@ -1,3 +1,5 @@
+import { API_BASE } from '../config';
+
 export interface SovereignIdentity {
   username: string;
   dht_key: string;
@@ -9,7 +11,7 @@ const IDENTITY_KEY = 'veilid_sovereign_identity_v2';
 
 export class IdentityVault {
   static async generate(username: string, passphrase?: string): Promise<SovereignIdentity> {
-    const response = await fetch('http://127.0.0.1:1337/identity/generate', { method: 'POST' });
+    const response = await fetch(`${API_BASE}/identity/generate`, { method: 'POST' });
     if (!response.ok) throw new Error("Secure generation failed");
     const data = await response.json();
 
@@ -25,7 +27,7 @@ export class IdentityVault {
   }
 
   static async import(username: string, mnemonic: string, passphrase?: string): Promise<SovereignIdentity> {
-    const response = await fetch('http://127.0.0.1:1337/identity/import', {
+    const response = await fetch(`${API_BASE}/identity/import`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mnemonic })
@@ -86,7 +88,7 @@ export class IdentityVault {
     localStorage.setItem(IDENTITY_KEY, JSON.stringify(vaultData));
   }
 
-  static async get(passphrase = 'session_default'): Promise<SovereignIdentity | null> {
+  static async get(passphrase = localStorage.getItem('veilid_vault_pin') || 'session_default'): Promise<SovereignIdentity | null> {
     const raw = localStorage.getItem(IDENTITY_KEY);
     if (!raw) return null;
 

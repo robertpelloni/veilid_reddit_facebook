@@ -7,10 +7,11 @@ export interface PostHeader {
   timestamp: string;
   signature?: string;
 }
+import { API_BASE } from "../config";
 
 export class FeedAggregator {
   private subscribedKeys: string[] = [];
-  private baseUrl = 'http://127.0.0.1:1337';
+  private baseUrl = API_BASE;
 
   constructor() {
     const saved = localStorage.getItem('subscribed_keys');

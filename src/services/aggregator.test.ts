@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FeedAggregator } from '../services/aggregator';
+vi.mock("../config", () => ({ API_BASE: "http://localhost:1337" }));
 
 describe('FeedAggregator', () => {
   beforeEach(() => {

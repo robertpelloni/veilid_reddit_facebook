@@ -158,13 +158,25 @@ func (s *SQLiteStorage) GetUser(id string) (*core.User, error) {
 	var credits float64
 	err := s.db.QueryRow("SELECT voice_credits FROM users WHERE id = ?", id).Scan(&credits)
 	if err != nil {
-		return &core.User{ID: id, VoiceCredits: 10, Delegates: make(map[string]string)}, nil // Default
+		credits = 10.0 // Default
 	}
-	return &core.User{ID: id, VoiceCredits: credits, Delegates: make(map[string]string)}, nil
+
+	delegates := make(map[string]string)
+	rows, err := s.db.Query("SELECT delegatee_id, subject FROM dao_delegations WHERE delegator_id = ?", id)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var delegatee, subject string
+			rows.Scan(&delegatee, &subject)
+			delegates[subject] = delegatee
+		}
+	}
+
+	return &core.User{ID: id, VoiceCredits: credits, Delegates: delegates}, nil
 }
 
 func (s *SQLiteStorage) GetUsers() ([]*core.User, error) {
-	rows, err := s.db.Query("SELECT id, voice_credits FROM users")
+	rows, err := s.db.Query("SELECT id FROM users")
 	if err != nil {
 		return nil, err
 	}
@@ -172,10 +184,9 @@ func (s *SQLiteStorage) GetUsers() ([]*core.User, error) {
 
 	var users []*core.User
 	for rows.Next() {
-		u := &core.User{Delegates: make(map[string]string)}
-		if err := rows.Scan(&u.ID, &u.VoiceCredits); err != nil {
-			return nil, err
-		}
+		var id string
+		rows.Scan(&id)
+		u, _ := s.GetUser(id)
 		users = append(users, u)
 	}
 	return users, nil

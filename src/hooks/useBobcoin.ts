@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_BASE } from '../config';
 
 export function useBobcoin(dhtKey: string | undefined) {
     const [balance, setBalance] = useState(0);
@@ -7,7 +8,7 @@ export function useBobcoin(dhtKey: string | undefined) {
     const fetchBalance = async () => {
         if (!dhtKey) return;
         try {
-            const resp = await fetch(`http://127.0.0.1:1337/bobcoin/balance?account=${dhtKey}`);
+                const resp = await fetch(`${API_BASE}/bobcoin/balance?account=${dhtKey}`);
             if (resp.ok) {
                 const data = await resp.json();
                 setBalance(data.balance);

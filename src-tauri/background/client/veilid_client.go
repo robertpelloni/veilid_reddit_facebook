@@ -14,6 +14,7 @@ import (
 type VeilidClient struct {
 	RPCAddr        string
 	ProtocolString string
+	ctxID          string
 }
 
 func NewVeilidClient(rpcAddr string) *VeilidClient {
@@ -77,20 +78,25 @@ func (c *VeilidClient) rawCall(method string, params interface{}) (json.RawMessa
 }
 
 func (c *VeilidClient) call(method string, params map[string]interface{}) (json.RawMessage, error) {
-	ctxID, err := c.setupRoutingContext()
-	if err != nil {
-		return nil, fmt.Errorf("context setup failed: %v", err)
+	if c.ctxID == "" {
+		ctxID, err := c.setupRoutingContext()
+		if err != nil {
+			return nil, fmt.Errorf("context setup failed: %v", err)
+		}
+		c.ctxID = ctxID
 	}
 
 	if params == nil {
 		params = make(map[string]interface{})
 	}
-	params["routing_context"] = ctxID
+	params["routing_context"] = c.ctxID
 
 	res, err := c.rawCall(method, params)
-
-	// Best effort cleanup
-	c.rawCall("veilid.routing_context_close", map[string]string{"routing_context": ctxID})
+	if err != nil {
+		// If context expired, reset and retry once
+		c.ctxID = ""
+		return c.call(method, params)
+	}
 
 	return res, err
 }
@@ -219,7 +225,14 @@ func (c *VeilidClient) FetchPostsP2P(subredditKey string) ([]schema.PostHeader, 
 }
 
 func (c *VeilidClient) PublishComment(cmt schema.Comment, postKey string) error {
-	data, _ := json.Marshal(cmt)
+	comments, _ := c.GetCommentsP2P(postKey)
+	comments = append(comments, cmt)
+
+	if len(comments) > 100 {
+		comments = comments[len(comments)-100:]
+	}
+
+	data, _ := json.Marshal(comments)
 	_, err := c.call("veilid.routing_context_set_dht_value", map[string]interface{}{
 		"key":   postKey,
 		"value": data,
@@ -235,7 +248,9 @@ func (c *VeilidClient) GetCommentsP2P(postKey string) ([]schema.Comment, error) 
 		return nil, err
 	}
 	var comments []schema.Comment
-	json.Unmarshal(result, &comments)
+	if err := json.Unmarshal(result, &comments); err != nil {
+		return []schema.Comment{}, nil
+	}
 	return comments, nil
 }
 

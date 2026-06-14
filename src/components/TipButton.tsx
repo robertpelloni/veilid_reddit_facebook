@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Coins } from 'lucide-react';
 import { IdentityVault } from '../services/identity';
+import { API_BASE } from '../config';
 
 interface TipButtonProps {
     recipientAccount: string;
@@ -32,7 +33,7 @@ export const TipButton: React.FC<TipButtonProps> = ({ recipientAccount, senderAc
             };
 
             // 2. Request sidecar to sign the block (requires real private key)
-            const signResp = await fetch('http://127.0.0.1:1337/identity/sign', {
+            const signResp = await fetch(`${API_BASE}/identity/sign`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -43,7 +44,7 @@ export const TipButton: React.FC<TipButtonProps> = ({ recipientAccount, senderAc
             const { signature } = await signResp.json();
 
             // 3. Submit the signed block
-            const resp = await fetch('http://127.0.0.1:1337/bobcoin/transfer', {
+            const resp = await fetch(`${API_BASE}/bobcoin/transfer`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

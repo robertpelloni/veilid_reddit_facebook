@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../config';
 
 export const NetworkStatus: React.FC = () => {
   const [status, setStatus] = useState<any>(null);
@@ -6,7 +7,7 @@ export const NetworkStatus: React.FC = () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const resp = await fetch('http://127.0.0.1:1337/status');
+        const resp = await fetch(`${API_BASE}/status`);
         if (resp.ok) setStatus(await resp.json());
       } catch (e) { console.error(e); }
     };

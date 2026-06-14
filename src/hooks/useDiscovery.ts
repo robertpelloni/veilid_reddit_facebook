@@ -1,11 +1,12 @@
 import { useState } from 'react';
+import { API_BASE } from '../config';
 
 export function useDiscovery() {
   const [discoveredKeys, setDiscoveredKeys] = useState<any[]>([]);
 
   const fetchDiscovery = async () => {
     try {
-      const resp = await fetch('http://127.0.0.1:1337/discovery');
+      const resp = await fetch(`${API_BASE}/discovery`);
       if (resp.ok) {
         const data = await resp.json();
         setDiscoveredKeys(data || []);

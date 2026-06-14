@@ -16,6 +16,7 @@ import { SovereignOnboarding } from './components/SovereignOnboarding';
 import { useDiscovery } from './hooks/useDiscovery';
 import { useDAO } from './hooks/useDAO';
 import { useBobcoin } from './hooks/useBobcoin';
+import { API_BASE } from './config';
 
 const aggregator = new FeedAggregator();
 const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
@@ -47,6 +48,7 @@ const App = () => {
   const { balance, trust, fetchBalance } = useBobcoin(identity?.dht_key);
 
   const handleUnlock = async () => {
+      localStorage.setItem('veilid_vault_pin', unlockPin || 'session_default');
       const savedId = await IdentityVault.get(unlockPin || 'session_default');
       if (savedId) {
           setIdentity(savedId);
@@ -72,7 +74,7 @@ const App = () => {
     aggregator.subscribe(newKey);
     try {
       setFeedbackStatus('Fetching profile...');
-      const response = await fetch(`http://127.0.0.1:1337/fetch?key=${newKey}`);
+      const response = await fetch(`${API_BASE}/fetch?key=${newKey}`);
       if (!response.ok) throw new Error('Fetch failed');
       const data = await response.json();
 
@@ -93,7 +95,7 @@ const App = () => {
     if (!feedback || !identity) return;
     setFeedbackStatus('Sending P2P feedback...');
     try {
-        await fetch('http://127.0.0.1:1337/message/send', {
+        await fetch(`${API_BASE}/message/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -120,7 +122,7 @@ const App = () => {
         const postKey = `vld_post_${Date.now()}_${identity.dht_key.substring(0, 8)}`;
 
         // 1. Get real Ed25519 signature from sidecar
-        const signResp = await fetch('http://127.0.0.1:1337/identity/sign', {
+        const signResp = await fetch(`${API_BASE}/identity/sign`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -130,7 +132,7 @@ const App = () => {
         });
         const { signature } = await signResp.json();
 
-        await fetch('http://127.0.0.1:1337/posts/create', {
+        await fetch(`${API_BASE}/posts/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -151,7 +153,7 @@ const App = () => {
   const handleSaveProfile = async (username: string, css: string, html: string) => {
     setIsSavingProfile(true);
     try {
-      const response = await fetch('http://127.0.0.1:1337/publish', {
+      const response = await fetch(`${API_BASE}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -170,7 +172,7 @@ const App = () => {
           await IdentityVault.save(updated, unlockPin || 'session_default');
       }
 
-      await fetch('http://127.0.0.1:1337/register', {
+      await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dht_key: data.dht_key, username })
