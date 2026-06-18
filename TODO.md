@@ -1,9 +1,9 @@
 # TODO.md
 
 ## Post-1.1.0 Refinement
-- [ ] Refactor `src/main.tsx` into modular React hooks.
-- [ ] Add unit tests for `FeedAggregator` service.
-- [ ] Implement "Identity Export" UI for Routing Pair backup.
+- [x] Refactor `src/main.tsx` into modular React hooks.
+- [x] Add unit tests for `FeedAggregator` service.
+- [x] Implement "Identity Export" UI for Routing Pair backup.
 
 ## UI/UX Enhancements
 - [ ] Add more default MySpace-style themes.

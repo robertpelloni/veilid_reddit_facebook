@@ -1,5 +1,13 @@
 # CHANGELOG.md
 
+## [1.1.1-prod] - 2026-06-18
+### Added
+- **Identity Export**: Added UI functionality to export identity backup (Routing Pair) to a downloadable JSON file.
+- **Testing**: Added unit tests for `FeedAggregator` service to improve code coverage.
+
+### Changed
+- **Refactoring**: Refactored `src/main.tsx` into modular React hooks (`useDiscovery`, `useDAOProposals`) for cleaner state management.
+
 ## [1.1.0] - 2026-06-06
 ### Added
 - **Sidecar-naming Protocol**: Standardized Go sidecar binary naming for cross-platform Tauri compatibility.
