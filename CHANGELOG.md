@@ -1,5 +1,10 @@
 # CHANGELOG.md
 
+## [1.1.2-prod] - 2026-06-18
+### Added
+- **Top 8 Friends**: Added a "Top 8" friends visualization component to the sovereign profile.
+- **Profile Themes**: Added more default MySpace-style templates (Cyberpunk, Retro 90s, Minimalist) to the Profile Editor.
+
 ## [1.1.1-prod] - 2026-06-18
 ### Added
 - **Identity Export**: Added UI functionality to export identity backup (Routing Pair) to a downloadable JSON file.

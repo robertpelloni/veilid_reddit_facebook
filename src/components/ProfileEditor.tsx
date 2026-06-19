@@ -10,11 +10,43 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ onSave, isSaving }
   const [cssStyles, setCssStyles] = useState(`body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`);
   const [htmlContent, setHtmlContent] = useState(`<h1>My Sovereign Profile</h1><p>Welcome to my decentralised space.</p>`);
 
+  const applyTheme = (theme: string) => {
+    switch (theme) {
+      case 'cyberpunk':
+        setCssStyles(`body { background: #000; margin: 0; padding: 20px; font-family: 'Courier New', Courier, monospace; color: #0f0; } #myspace-subreddit-root { background: #111; padding: 30px; border: 1px solid #0f0; border-radius: 0; max-width: 600px; margin: 0 auto; box-shadow: 0 0 10px #0f0; } h1 { color: #f0f; border-bottom: 1px dashed #f0f; padding-bottom: 10px; text-shadow: 2px 2px #00f; } p { line-height: 1.6; color: #0f0; }`);
+        break;
+      case 'retro90s':
+        setCssStyles(`body { background: url('https://web.archive.org/web/20090829074052/http://geocities.com/Heartland/Valley/2521/stars.gif') repeat; margin: 0; padding: 20px; font-family: 'Times New Roman', Times, serif; color: yellow; } #myspace-subreddit-root { background: blue; padding: 30px; border: 5px ridge silver; max-width: 600px; margin: 0 auto; } h1 { color: red; text-align: center; text-decoration: underline blink; font-size: 2.5em; } p { line-height: 1.6; color: white; font-size: 1.2em; }`);
+        break;
+      case 'minimalist':
+        setCssStyles(`body { background: #fafafa; margin: 0; padding: 40px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #111; } #myspace-subreddit-root { background: transparent; padding: 0; max-width: 600px; margin: 0 auto; } h1 { color: #111; font-weight: 800; letter-spacing: -1px; margin-bottom: 24px; } p { line-height: 1.8; color: #444; font-size: 1.1em; }`);
+        break;
+      case 'default':
+      default:
+        setCssStyles(`body { background: #e9ebee; margin: 0; padding: 20px; font-family: sans-serif; } #myspace-subreddit-root { background: white; padding: 30px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto; } h1 { color: #3b5998; border-bottom: 1px solid #ddd; padding-bottom: 10px; } p { line-height: 1.6; color: #333; }`);
+        break;
+    }
+  };
+
   return (
     <div className="space-y-6 bg-white p-6 rounded-2xl border border-gray-200">
       <h2 className="text-2xl font-bold text-gray-800">Edit Your Sovereign Profile</h2>
 
       <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <label htmlFor="theme" className="text-sm font-medium text-gray-700 whitespace-nowrap">Load Template:</label>
+          <select
+            id="theme"
+            onChange={(e) => applyTheme(e.target.value)}
+            className="p-2 border border-gray-300 rounded-lg text-sm outline-none bg-gray-50 focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="default">Classic MySpace</option>
+            <option value="cyberpunk">Cyberpunk Terminal</option>
+            <option value="retro90s">Retro 90s Web</option>
+            <option value="minimalist">Modern Minimalist</option>
+          </select>
+        </div>
+
         <div>
           <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">Username</label>
           <input

@@ -13,6 +13,7 @@ import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
 import { useDiscovery } from './hooks/useDiscovery';
 import { useDAOProposals } from './hooks/useDAOProposals';
+import { Top8Friends } from './components/Top8Friends';
 
 const aggregator = new FeedAggregator();
 const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
@@ -277,6 +278,7 @@ const App = () => {
                     )}
                     </div>
                 </section>
+                <Top8Friends />
                 <ProfileEditor onSave={handleSaveProfile} isSaving={isSavingProfile} />
               </>
           ) : (

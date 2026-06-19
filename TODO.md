@@ -6,8 +6,8 @@
 - [x] Implement "Identity Export" UI for Routing Pair backup.
 
 ## UI/UX Enhancements
-- [ ] Add more default MySpace-style themes.
-- [ ] Implement "Top 8" friends visualization component.
+- [x] Add more default MySpace-style themes.
+- [x] Implement "Top 8" friends visualization component.
 - [ ] Integrated media player for profile background audio.
 
 ## Long-term Research
