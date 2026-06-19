@@ -5,7 +5,7 @@ import { ProfileContainer } from './components/ProfileContainer';
 import { ProfileEditor } from './components/ProfileEditor';
 import { NetworkStatus } from './components/NetworkStatus';
 import { FeedAggregator } from './services/aggregator';
-import { DAOProposalList, DAOProposal } from './components/DAO/DAOProposalList';
+import { DAOProposalList } from './components/DAO/DAOProposalList';
 import { DAOProposalForm } from './components/DAO/DAOProposalForm';
 import { CommentThread } from './components/CommentThread';
 import { Gavel, Plus, LogOut, Skull, Download } from 'lucide-react';

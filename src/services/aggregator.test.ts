@@ -61,7 +61,7 @@ describe('FeedAggregator', () => {
     const mockPost1 = { post_id: '1', author_id: 'a', title: 'Test 1', target_key: 'tk1', timestamp: '2026-06-05T10:00:00Z' };
     const mockPost2 = { post_id: '2', author_id: 'b', title: 'Test 2', target_key: 'tk2', timestamp: '2026-06-05T11:00:00Z' };
 
-    global.fetch = vi.fn().mockImplementation((url: string) => {
+    globalThis.fetch = vi.fn().mockImplementation((url: string) => {
         if (url.includes('key1')) {
             return Promise.resolve({
                 ok: true,
@@ -81,14 +81,14 @@ describe('FeedAggregator', () => {
 
     // Should return sorted by timestamp descending
     expect(feeds).toEqual([mockPost2, mockPost1]);
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(2);
   });
 
   it('should handle fetch failures gracefully', async () => {
       const aggregator = new FeedAggregator();
       aggregator.subscribe('key1');
 
-      global.fetch = vi.fn().mockImplementation(() => Promise.reject('Network error'));
+      globalThis.fetch = vi.fn().mockImplementation(() => Promise.reject('Network error'));
 
       const feeds = await aggregator.fetchFeed();
       expect(feeds).toEqual([]);
