@@ -8,7 +8,7 @@
 ## UI/UX Enhancements
 - [x] Add more default MySpace-style themes.
 - [x] Implement "Top 8" friends visualization component.
-- [ ] Integrated media player for profile background audio.
+- [x] Integrated media player for profile background audio.
 
 ## Long-term Research
 - [ ] Explore CRDTs for collaborative subreddit editing.

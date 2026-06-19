@@ -14,6 +14,7 @@ import { SovereignOnboarding } from './components/SovereignOnboarding';
 import { useDiscovery } from './hooks/useDiscovery';
 import { useDAOProposals } from './hooks/useDAOProposals';
 import { Top8Friends } from './components/Top8Friends';
+import { MediaPlayer } from './components/MediaPlayer';
 
 const aggregator = new FeedAggregator();
 const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
@@ -264,7 +265,10 @@ const App = () => {
           {activeTab === 'social' ? (
               <>
                 <section>
-                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Sovereign Profile Preview</h2>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold text-gray-800">Sovereign Profile Preview</h2>
+                        <MediaPlayer src="https://actions.google.com/sounds/v1/water/rain_on_roof.ogg" title="Lo-Fi Beats to Relax/Code To" artist="Veilid Radio" />
+                    </div>
                     <div className="border rounded-2xl overflow-hidden shadow-xl bg-white aspect-video lg:aspect-auto lg:h-[500px]">
                     {viewingProfile ? (
                         <ProfileContainer

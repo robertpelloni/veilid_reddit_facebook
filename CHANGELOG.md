@@ -1,5 +1,9 @@
 # CHANGELOG.md
 
+## [1.1.3-prod] - 2026-06-18
+### Added
+- **Media Player**: Integrated a MySpace-style background audio player into the sovereign profile preview.
+
 ## [1.1.2-prod] - 2026-06-18
 ### Added
 - **Top 8 Friends**: Added a "Top 8" friends visualization component to the sovereign profile.
