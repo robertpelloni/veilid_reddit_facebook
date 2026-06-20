@@ -387,6 +387,12 @@ func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify signature exists for cryptographic voting
+	if v.Signature == "" {
+		http.Error(w, "cryptographic signature required", http.StatusUnauthorized)
+		return
+	}
+
 	// 1. Calculate weighted power using Liquid Delegation core logic
 	power, err := core.CalculateEffectivePower(s.Storage, v.VoterID, "general")
 	if err != nil {
