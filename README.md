@@ -1,3 +1,5 @@
+# 🚧 UNDER CONSTRUCTION — ALPHA STATE! 🚧
+
 # Veilid Reddit MySpace
 
 **A Decentralized, Serverless, Sovereign Social Fabric.**
