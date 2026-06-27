@@ -18,4 +18,4 @@
 - [x] **Cryptographic Voting**: Signed vote aggregation with full DHT integration.
 - [x] **Tauri v2 Migration**: Upgrade to Tauri v2 for improved security and performance.
 - [ ] **Mobile Port**: Utilize Veilid's Flutter/Dart bindings for a native Android/iOS experience.
-- [ ] **Encrypted Media Storage**: Integrate IPFS or Hypercore for large-file media attachments.
+- [x] **Encrypted Media Storage**: Integrate IPFS or Hypercore for large-file media attachments.

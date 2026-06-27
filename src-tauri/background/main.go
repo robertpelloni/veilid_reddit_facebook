@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -14,6 +15,7 @@ import (
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/core"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/schema"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/storage"
+	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/storage/media"
 )
 
 const DefaultSidecarPort = "1337"
@@ -21,6 +23,7 @@ const DefaultSidecarPort = "1337"
 type AppState struct {
 	Veilid  *client.VeilidClient
 	Storage *storage.SQLiteStorage
+	Media   *media.IPFSStub
 }
 
 func main() {
@@ -56,9 +59,12 @@ func main() {
 		fmt.Println("Testnet mode enabled.")
 	}
 
+	mediaStore, _ := media.NewIPFSStub(filepath.Join(dataDir, "media_cache"))
+
 	state := &AppState{
 		Veilid:  v,
 		Storage: s,
+		Media:   mediaStore,
 	}
 
 	mux := http.NewServeMux()
@@ -76,6 +82,12 @@ func main() {
 	mux.HandleFunc("/dao/vote", state.handleDAOVote)
 	mux.HandleFunc("/comments/add", state.handleAddComment)
 	mux.HandleFunc("/comments/list", state.handleListComments)
+	mux.HandleFunc("/media/upload", state.handleMediaUpload)
+	mux.HandleFunc("/media/download", state.handleMediaDownload)
+	mux.HandleFunc("/media/upload", state.handleMediaUpload)
+	mux.HandleFunc("/media/download", state.handleMediaDownload)
+	mux.HandleFunc("/media/upload", state.handleMediaUpload)
+	mux.HandleFunc("/media/download", state.handleMediaDownload)
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -428,4 +440,58 @@ func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {
 		"status": "voted",
 		"weight_applied": fmt.Sprintf("%.2f", v.Weight),
 	})
+}
+
+
+func (s *AppState) handleMediaUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "POST required", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Read payload
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	cid, key, err := s.Media.StoreEncrypted(data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "uploaded",
+		"cid":    cid,
+		"key":    fmt.Sprintf("%x", key),
+	})
+}
+
+func (s *AppState) handleMediaDownload(w http.ResponseWriter, r *http.Request) {
+	cid := r.URL.Query().Get("cid")
+	keyHex := r.URL.Query().Get("key")
+	if cid == "" || keyHex == "" {
+		http.Error(w, "Missing cid or key", http.StatusBadRequest)
+		return
+	}
+
+	var key []byte
+	_, err := fmt.Sscanf(keyHex, "%x", &key)
+	if err != nil {
+		http.Error(w, "Invalid key format", http.StatusBadRequest)
+		return
+	}
+
+	data, err := s.Media.RetrieveDecrypted(cid, key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Write(data)
 }
