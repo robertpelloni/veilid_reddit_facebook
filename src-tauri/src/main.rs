@@ -1,17 +1,20 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use tauri::api::process::{Command, CommandEvent};
+use tauri::Manager;
+use tauri_plugin_shell::process::CommandEvent;
+use tauri_plugin_shell::ShellExt;
 
 fn main() {
   tauri::Builder::default()
+    .plugin(tauri_plugin_shell::init())
     .setup(|app| {
-      let data_dir = app.path_resolver().app_data_dir().expect("failed to get app data dir");
+      let data_dir = app.path().app_data_dir().expect("failed to get app data dir");
       std::fs::create_dir_all(&data_dir).expect("failed to create app data dir");
       let data_dir_str = data_dir.to_string_lossy().to_string();
 
-      let (mut rx, _child) = Command::new_sidecar("sidecar")
-        .expect("failed to setup sidecar")
+      let sidecar_command = app.shell().sidecar("sidecar").expect("failed to setup sidecar");
+      let (mut rx, _child) = sidecar_command
         .args(["-data-dir", &data_dir_str])
         .spawn()
         .expect("failed to spawn sidecar");
@@ -19,7 +22,7 @@ fn main() {
       tauri::async_runtime::spawn(async move {
         while let Some(event) = rx.recv().await {
           if let CommandEvent::Stdout(line) = event {
-            println!("sidecar: {}", line);
+            println!("sidecar: {}", String::from_utf8_lossy(&line));
           }
         }
       });
