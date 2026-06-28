@@ -17,7 +17,6 @@ import { Top8Friends } from './components/Top8Friends';
 import { MediaPlayer } from './components/MediaPlayer';
 import { signVotePayload } from './services/cryptoSignature';
 
-
 const aggregator = new FeedAggregator();
 const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
 
@@ -170,7 +169,9 @@ const App = () => {
   const handleVote = async (id: string, weight: number) => {
     if (!identity) return;
     try {
+        // Cryptographic voting: Generate signature for the vote payload
         const signature = await signVotePayload(id, identity.dht_key, weight, identity.private_key);
+
         await fetch('http://127.0.0.1:1337/dao/vote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

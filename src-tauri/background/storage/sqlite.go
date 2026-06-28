@@ -208,16 +208,16 @@ func (s *SQLiteStorage) SaveDAOProposal(p *schema.DAOProposal) error {
 	return err
 }
 
-func (s *SQLiteStorage) GetDAOProposals() ([]schema.DAOProposal, error) {
+func (s *SQLiteStorage) GetDAOProposals() ([]*schema.DAOProposal, error) {
 	rows, err := s.db.Query("SELECT id, title, abstract, proposer_id, status, votes_for, votes_against, created_at FROM dao_proposals ORDER BY created_at DESC")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var proposals []schema.DAOProposal
+	var proposals []*schema.DAOProposal
 	for rows.Next() {
-		var p schema.DAOProposal
+		p := &schema.DAOProposal{}
 		if err := rows.Scan(&p.ID, &p.Title, &p.Abstract, &p.ProposerID, &p.Status, &p.VotesFor, &p.VotesAgainst, &p.CreatedAt); err != nil {
 			return nil, err
 		}
@@ -250,25 +250,6 @@ func (s *SQLiteStorage) GetComments(postID string) ([]*schema.Comment, error) {
 		comments = append(comments, c)
 	}
 	return comments, nil
-}
-
-
-func (s *SQLiteStorage) GetDAOVotes(proposalID string) ([]schema.DAOVote, error) {
-	rows, err := s.db.Query("SELECT proposal_id, voter_id, weight, signature FROM dao_votes WHERE proposal_id = ?", proposalID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var votes []schema.DAOVote
-	for rows.Next() {
-		var v schema.DAOVote
-		if err := rows.Scan(&v.ProposalID, &v.VoterID, &v.Weight, &v.Signature); err != nil {
-			return nil, err
-		}
-		votes = append(votes, v)
-	}
-	return votes, nil
 }
 
 func (s *SQLiteStorage) CastDAOVote(v *schema.DAOVote) error {
