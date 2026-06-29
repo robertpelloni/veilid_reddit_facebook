@@ -28,7 +28,6 @@ chmod +x setup-env.sh
 3. Start the application:
    ```bash
    npm run tauri dev
-   # Note: Tauri v2 plugins are initialized automatically by the new Rust builder.
    ```
 
 ## Production Deployment
@@ -43,7 +42,6 @@ go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/
 
 # Build Tauri Production Bundle
 npm run tauri build
-# Note: With Tauri v2, external binaries are configured in tauri.conf.json under bundle.externalBin
 ```
 
 ### 2. Security Hardening
