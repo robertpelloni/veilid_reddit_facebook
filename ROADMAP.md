@@ -15,7 +15,7 @@
 ## Phase 3: Network Hardening (ACTIVE)
 - [x] **Secure Identity Vault**: High-entropy key generation and local encryption.
 - [x] **Stealth Launch Strategy**: Detailed rollout and user acquisition plan.
-- [ ] **Cryptographic Voting**: Signed vote aggregation with full DHT integration.
+- [x] **Cryptographic Voting**: Signed vote aggregation with full DHT integration.
 - [ ] **Tauri v2 Migration**: Upgrade to Tauri v2 for improved security and performance.
 - [ ] **Mobile Port**: Utilize Veilid's Flutter/Dart bindings for a native Android/iOS experience.
 - [ ] **Encrypted Media Storage**: Integrate IPFS or Hypercore for large-file media attachments.

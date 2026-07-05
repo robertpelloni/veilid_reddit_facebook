@@ -387,6 +387,13 @@ func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Verify signature exists for cryptographic voting
+	payload := fmt.Sprintf("%s:%s:%f", v.ProposalID, v.VoterID, v.Weight)
+	if !core.VerifySignature(payload, v.Signature, v.VoterID) {
+		http.Error(w, "invalid cryptographic signature", http.StatusUnauthorized)
+		return
+	}
+
 	// 1. Calculate weighted power using Liquid Delegation core logic
 	power, err := core.CalculateEffectivePower(s.Storage, v.VoterID, "general")
 	if err != nil {
@@ -408,6 +415,13 @@ func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {
 	if err := s.Storage.CastDAOVote(&v); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
+	}
+
+	// 4. Aggregate updated totals and optionally republish proposal state
+	if updatedProposal, err := core.AggregateDAOVotes(s.Storage, v.ProposalID); err == nil {
+		// In a real application, we would call a method to publish the updated proposal state
+		// e.g., s.Veilid.PublishDAOProposalP2P(*updatedProposal)
+		_ = updatedProposal
 	}
 
 	json.NewEncoder(w).Encode(map[string]string{

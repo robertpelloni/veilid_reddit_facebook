@@ -5,12 +5,17 @@ import { ProfileContainer } from './components/ProfileContainer';
 import { ProfileEditor } from './components/ProfileEditor';
 import { NetworkStatus } from './components/NetworkStatus';
 import { FeedAggregator } from './services/aggregator';
-import { DAOProposalList, DAOProposal } from './components/DAO/DAOProposalList';
+import { DAOProposalList } from './components/DAO/DAOProposalList';
 import { DAOProposalForm } from './components/DAO/DAOProposalForm';
 import { CommentThread } from './components/CommentThread';
-import { Gavel, Plus, LogOut, Skull } from 'lucide-react';
+import { Gavel, Plus, LogOut, Skull, Download } from 'lucide-react';
 import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
+import { useDiscovery } from './hooks/useDiscovery';
+import { useDAOProposals } from './hooks/useDAOProposals';
+import { Top8Friends } from './components/Top8Friends';
+import { MediaPlayer } from './components/MediaPlayer';
+import { signVotePayload } from './services/cryptoSignature';
 
 const aggregator = new FeedAggregator();
 const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
@@ -22,30 +27,14 @@ const App = () => {
   const [feedback, setFeedback] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [discoveredKeys, setDiscoveredKeys] = useState<any[]>([]);
   const [newPostTitle, setNewPostTitle] = useState('');
-  const [daoProposals, setDAOProposals] = useState<DAOProposal[]>([]);
   const [showProposalForm, setShowProposalForm] = useState(false);
   const [activeTab, setActiveTab] = useState<'social' | 'dao'>('social');
 
+  const { discoveredKeys, fetchDiscovery } = useDiscovery();
+  const { daoProposals, fetchDAOProposals } = useDAOProposals();
+
   const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>(null);
-
-  const fetchDiscovery = async () => {
-    try {
-      const resp = await fetch('http://127.0.0.1:1337/discovery');
-      if (resp.ok) {
-        const data = await resp.json();
-        setDiscoveredKeys(data || []);
-      }
-    } catch (e) { console.error(e); }
-  };
-
-  const fetchDAOProposals = async () => {
-    try {
-        const resp = await fetch('http://127.0.0.1:1337/dao/proposals');
-        if (resp.ok) setDAOProposals(await resp.json());
-    } catch (e) { console.error(e); }
-  };
 
   useEffect(() => {
     IdentityVault.get().then(savedId => {
@@ -180,13 +169,17 @@ const App = () => {
   const handleVote = async (id: string, weight: number) => {
     if (!identity) return;
     try {
+        // Cryptographic voting: Generate signature for the vote payload
+        const signature = await signVotePayload(id, identity.dht_key, weight, identity.private_key);
+
         await fetch('http://127.0.0.1:1337/dao/vote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 proposal_id: id,
                 voter_id: identity.dht_key,
-                weight
+                weight,
+                signature
             })
         });
         fetchDAOProposals();
@@ -197,6 +190,23 @@ const App = () => {
       IdentityVault.clear();
       setIdentity(null);
       window.location.reload();
+  };
+
+  const handleExportIdentity = async () => {
+      try {
+          const binaryData = await IdentityVault.exportToBinary();
+          const blob = new Blob([binaryData], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `identity_backup_${identity?.dht_key.substring(0, 8)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+      } catch (e) {
+          console.error("Failed to export identity", e);
+      }
   };
 
   if (!identity) {
@@ -245,7 +255,10 @@ const App = () => {
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">Authenticated as {identity.username}</span>
             <div className="flex items-center gap-3">
                 <p className="text-sm font-mono text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100 truncate max-w-[200px]">{identity.dht_key}</p>
-                <button onClick={() => { IdentityVault.clear(); setIdentity(null); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                <button onClick={handleExportIdentity} title="Export Identity Backup" className="text-gray-400 hover:text-blue-500 transition-colors">
+                    <Download size={18} />
+                </button>
+                <button onClick={() => { IdentityVault.clear(); setIdentity(null); }} title="Log Out" className="text-gray-400 hover:text-red-500 transition-colors">
                     <LogOut size={18} />
                 </button>
             </div>
@@ -257,7 +270,10 @@ const App = () => {
           {activeTab === 'social' ? (
               <>
                 <section>
-                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Sovereign Profile Preview</h2>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold text-gray-800">Sovereign Profile Preview</h2>
+                        <MediaPlayer src="https://actions.google.com/sounds/v1/water/rain_on_roof.ogg" title="Lo-Fi Beats to Relax/Code To" artist="Veilid Radio" />
+                    </div>
                     <div className="border rounded-2xl overflow-hidden shadow-xl bg-white aspect-video lg:aspect-auto lg:h-[500px]">
                     {viewingProfile ? (
                         <ProfileContainer
@@ -271,6 +287,7 @@ const App = () => {
                     )}
                     </div>
                 </section>
+                <Top8Friends />
                 <ProfileEditor onSave={handleSaveProfile} isSaving={isSavingProfile} />
               </>
           ) : (
