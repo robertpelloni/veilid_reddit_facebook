@@ -1,5 +1,22 @@
 # CHANGELOG.md
 
+## [1.1.3-prod] - 2026-06-18
+### Added
+- **Media Player**: Integrated a MySpace-style background audio player into the sovereign profile preview.
+
+## [1.1.2-prod] - 2026-06-18
+### Added
+- **Top 8 Friends**: Added a "Top 8" friends visualization component to the sovereign profile.
+- **Profile Themes**: Added more default MySpace-style templates (Cyberpunk, Retro 90s, Minimalist) to the Profile Editor.
+
+## [1.1.1-prod] - 2026-06-18
+### Added
+- **Identity Export**: Added UI functionality to export identity backup (Routing Pair) to a downloadable JSON file.
+- **Testing**: Added unit tests for `FeedAggregator` service to improve code coverage.
+
+### Changed
+- **Refactoring**: Refactored `src/main.tsx` into modular React hooks (`useDiscovery`, `useDAOProposals`) for cleaner state management.
+
 ## [1.1.0] - 2026-06-06
 ### Added
 - **Sidecar-naming Protocol**: Standardized Go sidecar binary naming for cross-platform Tauri compatibility.
