@@ -20,3 +20,5 @@ src-tauri/target/
 .DS_Store
 Thumbs.db
 release/
+mobile/
+my_space_mobile/

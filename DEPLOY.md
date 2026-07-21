@@ -25,10 +25,12 @@ chmod +x setup-env.sh
    mkdir -p src-tauri/bin
    go build -o src-tauri/bin/sidecar-x86_64-unknown-linux-gnu ./src-tauri/background/main.go
    ```
-3. Start the application:
+3. Start the application using Tauri v2:
    ```bash
    npm run tauri dev
    ```
+
+Note: With the Tauri v2 Migration, the application leverages `@tauri-apps/plugin-shell` and `@tauri-apps/plugin-process` to natively manage the Go sidecar.
 
 ## Production Deployment
 

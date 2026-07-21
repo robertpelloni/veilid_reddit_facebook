@@ -167,48 +167,38 @@ func TestIntegrationAPI(t *testing.T) {
 		}
 	})
 
-	t.Run("Bobcoin API", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/bobcoin/balance?account=6MREjxvyz8Np2XK59tj3A5CfcygemYjUn7NSnCrRN3Yv", nil)
-		rr := httptest.NewRecorder()
-		state.handleBobcoinBalance(rr, req)
-		if rr.Code != http.StatusOK {
-			t.Errorf("Balance check failed: %d", rr.Code)
+	t.Run("Voting API", func(t *testing.T) {
+		vote := schema.DAOVote{
+			ProposalID: "prop-123",
+			VoterID:    "alice",
+			Weight:     1.0,
+			Signature:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 		}
+		body, _ := json.Marshal(vote)
+		req := httptest.NewRequest("POST", "/dao/vote", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		state.handleDAOVote(rr, req)
 
-		var resp map[string]interface{}
-		json.Unmarshal(rr.Body.Bytes(), &resp)
-		if _, ok := resp["balance"]; !ok {
-			t.Error("Balance response missing 'balance' field")
+		if rr.Code != http.StatusOK {
+			t.Errorf("DAO vote failed: %d", rr.Code)
 		}
 	})
 
-	t.Run("Bobcoin API", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/bobcoin/balance?account=6MREjxvyz8Np2XK59tj3A5CfcygemYjUn7NSnCrRN3Yv", nil)
+	t.Run("Media API", func(t *testing.T) {
+		mediaReq := struct {
+			Data string `json:"base64_data"`
+			Key  string `json:"media_key"`
+		}{
+			Data: "c29tZV9kYXRh",
+			Key:  "my_secret_key",
+		}
+		body, _ := json.Marshal(mediaReq)
+		req := httptest.NewRequest("POST", "/media/upload", bytes.NewBuffer(body))
 		rr := httptest.NewRecorder()
-		state.handleBobcoinBalance(rr, req)
+		state.handleMediaUpload(rr, req)
+
 		if rr.Code != http.StatusOK {
-			t.Errorf("Balance check failed: %d", rr.Code)
-		}
-
-		var resp map[string]interface{}
-		json.Unmarshal(rr.Body.Bytes(), &resp)
-		if _, ok := resp["balance"]; !ok {
-			t.Error("Balance response missing 'balance' field")
-		}
-	})
-
-	t.Run("Bobcoin API", func(t *testing.T) {
-		req := httptest.NewRequest("GET", "/bobcoin/balance?account=6MREjxvyz8Np2XK59tj3A5CfcygemYjUn7NSnCrRN3Yv", nil)
-		rr := httptest.NewRecorder()
-		state.handleBobcoinBalance(rr, req)
-		if rr.Code != http.StatusOK {
-			t.Errorf("Balance check failed: %d", rr.Code)
-		}
-
-		var resp map[string]interface{}
-		json.Unmarshal(rr.Body.Bytes(), &resp)
-		if _, ok := resp["balance"]; !ok {
-			t.Error("Balance response missing 'balance' field")
+			t.Errorf("Media upload failed: %d", rr.Code)
 		}
 	})
 }

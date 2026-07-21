@@ -85,6 +85,11 @@ func (s *SQLiteStorage) initSchema() error {
 			content TEXT,
 			timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 		);
+		CREATE TABLE IF NOT EXISTS media (
+			hash TEXT PRIMARY KEY,
+			base64_data TEXT,
+			uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		);
 	`)
 	return err
 }
@@ -297,4 +302,21 @@ func (s *SQLiteStorage) CastDAOVote(v *schema.DAOVote) error {
 	}
 
 	return tx.Commit()
+}
+
+func (s *SQLiteStorage) SaveMedia(hash string, b64 string) error {
+	_, err := s.db.Exec(`
+		INSERT OR IGNORE INTO media (hash, base64_data)
+		VALUES (?, ?)
+	`, hash, b64)
+	return err
+}
+
+func (s *SQLiteStorage) GetMedia(hash string) (string, error) {
+	var b64 string
+	err := s.db.QueryRow("SELECT base64_data FROM media WHERE hash = ?", hash).Scan(&b64)
+	if err != nil {
+		return "", err
+	}
+	return b64, nil
 }
