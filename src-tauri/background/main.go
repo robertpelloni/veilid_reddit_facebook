@@ -1,12 +1,19 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	"time"
 
@@ -76,6 +83,8 @@ func main() {
 	mux.HandleFunc("/dao/vote", state.handleDAOVote)
 	mux.HandleFunc("/comments/add", state.handleAddComment)
 	mux.HandleFunc("/comments/list", state.handleListComments)
+	mux.HandleFunc("/media/upload", state.handleMediaUpload)
+	mux.HandleFunc("/media/get", state.handleMediaGet)
 
 	// Add simple CORS middleware
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -373,6 +382,157 @@ func (s *AppState) handleListComments(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(comments)
+}
+
+// Helper functions for prototype media encryption
+func encryptMedia(data []byte, key []byte) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonce := make([]byte, aesGCM.NonceSize())
+	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
+		return "", err
+	}
+
+	ciphertext := aesGCM.Seal(nonce, nonce, data, nil)
+	return hex.EncodeToString(ciphertext), nil
+}
+
+func decryptMedia(hexCiphertext string, key []byte) (string, error) {
+	data, err := hex.DecodeString(hexCiphertext)
+	if err != nil {
+		return "", err
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+
+	aesGCM, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+
+	nonceSize := aesGCM.NonceSize()
+	if len(data) < nonceSize {
+		return "", fmt.Errorf("ciphertext too short")
+	}
+
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return "", err
+	}
+
+	return string(plaintext), nil
+}
+
+func (s *AppState) handleMediaUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// 5MB Limit
+	r.Body = http.MaxBytesReader(w, r.Body, 5<<20)
+
+	var req struct {
+		Base64Data string `json:"base64_data"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	// Generate a unique 32-byte AES key for this specific payload
+	mediaKey := make([]byte, 32)
+	if _, err := io.ReadFull(rand.Reader, mediaKey); err != nil {
+		http.Error(w, "Failed to generate key", http.StatusInternalServerError)
+		return
+	}
+	mediaKeyHex := hex.EncodeToString(mediaKey)
+
+	// Prototype: Generate a deterministic mock IPFS hash based on SHA-256 of the plain data
+	hashBytes := sha256.Sum256([]byte(req.Base64Data))
+	hashString := hex.EncodeToString(hashBytes[:])
+
+	// Append the hex key to the hash URL so it travels alongside the reference and isn't stored in plain DB
+	// Standard practice for Hypercore/IPFS decryption proxies
+	ipfsURI := fmt.Sprintf("ipfs://Qm%s_%s", hashString[:44], mediaKeyHex)
+
+	// Encrypt the payload using the generated AES-GCM key
+	encryptedPayload, err := encryptMedia([]byte(req.Base64Data), mediaKey)
+	if err != nil {
+		http.Error(w, "Encryption failed", http.StatusInternalServerError)
+		return
+	}
+
+	// Store locally as prototype Encrypted Media chunk. Note we only store the hashString as the primary key, NOT the key.
+	storageHash := fmt.Sprintf("ipfs://Qm%s", hashString[:44])
+	if err := s.Storage.SaveMedia(storageHash, encryptedPayload); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"url": ipfsURI,
+	})
+}
+
+func (s *AppState) handleMediaGet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Only GET allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract hash from URL query parameter 'url' (e.g., ipfs://Qm..._key)
+	fullUrl := r.URL.Query().Get("url")
+	if fullUrl == "" {
+		http.Error(w, "Missing media URL", http.StatusBadRequest)
+		return
+	}
+
+	// Split the path to get the hash and the decryption key
+	parts := strings.Split(fullUrl, "_")
+	if len(parts) != 2 {
+		http.Error(w, "Invalid media hash format", http.StatusBadRequest)
+		return
+	}
+
+	storageHash := parts[0]
+	mediaKeyHex := parts[1]
+
+	mediaKey, err := hex.DecodeString(mediaKeyHex)
+	if err != nil || len(mediaKey) != 32 {
+		http.Error(w, "Invalid decryption key", http.StatusBadRequest)
+		return
+	}
+
+	encryptedPayload, err := s.Storage.GetMedia(storageHash)
+	if err != nil {
+		http.Error(w, "Media not found", http.StatusNotFound)
+		return
+	}
+
+	decryptedBase64, err := decryptMedia(encryptedPayload, mediaKey)
+	if err != nil {
+		http.Error(w, "Decryption failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"base64_data": decryptedBase64,
+	})
 }
 
 func (s *AppState) handleDAOVote(w http.ResponseWriter, r *http.Request) {

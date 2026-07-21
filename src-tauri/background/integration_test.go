@@ -166,4 +166,39 @@ func TestIntegrationAPI(t *testing.T) {
 			t.Errorf("Add comment failed: %d", rr.Code)
 		}
 	})
+
+	t.Run("Voting API", func(t *testing.T) {
+		vote := schema.DAOVote{
+			ProposalID: "prop-123",
+			VoterID:    "alice",
+			Weight:     1.0,
+			Signature:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+		}
+		body, _ := json.Marshal(vote)
+		req := httptest.NewRequest("POST", "/dao/vote", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		state.handleDAOVote(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("DAO vote failed: %d", rr.Code)
+		}
+	})
+
+	t.Run("Media API", func(t *testing.T) {
+		mediaReq := struct {
+			Data string `json:"base64_data"`
+			Key  string `json:"media_key"`
+		}{
+			Data: "c29tZV9kYXRh",
+			Key:  "my_secret_key",
+		}
+		body, _ := json.Marshal(mediaReq)
+		req := httptest.NewRequest("POST", "/media/upload", bytes.NewBuffer(body))
+		rr := httptest.NewRecorder()
+		state.handleMediaUpload(rr, req)
+
+		if rr.Code != http.StatusOK {
+			t.Errorf("Media upload failed: %d", rr.Code)
+		}
+	})
 }

@@ -26,9 +26,29 @@ const App = () => {
   const [newPostTitle, setNewPostTitle] = useState('');
   const [daoProposals, setDAOProposals] = useState<DAOProposal[]>([]);
   const [showProposalForm, setShowProposalForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<'social' | 'dao'>('social');
 
   const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>(null);
+
+  const resolveMedia = async (content: string): Promise<string> => {
+    // Intercept ipfs://<hash> URLs and fetch them from the local sidecar gateway
+    const ipfsRegex = /ipfs:\/\/([A-Za-z0-9_]+)/g;
+    let resolvedContent = content;
+    const matches = Array.from(content.matchAll(ipfsRegex));
+
+    for (const match of matches) {
+      const fullUrl = match[0];
+      try {
+        const resp = await fetch(`http://127.0.0.1:1337/media/get?url=${encodeURIComponent(fullUrl)}`);
+        if (resp.ok) {
+          const { base64_data } = await resp.json();
+          resolvedContent = resolvedContent.replace(fullUrl, base64_data);
+        }
+      } catch (e) {
+        console.error(`Failed to resolve media for ${fullUrl}`, e);
+      }
+    }
+    return resolvedContent;
+  };
 
   const fetchDiscovery = async () => {
     try {
@@ -43,7 +63,10 @@ const App = () => {
   const fetchDAOProposals = async () => {
     try {
         const resp = await fetch('http://127.0.0.1:1337/dao/proposals');
-        if (resp.ok) setDAOProposals(await resp.json());
+        if (resp.ok) {
+            const data = await resp.json();
+            setDAOProposals(data || []);
+        }
     } catch (e) { console.error(e); }
   };
 
@@ -76,9 +99,12 @@ const App = () => {
       if (!response.ok) throw new Error('Fetch failed');
       const data = await response.json();
 
+      const resolvedCss = await resolveMedia(data.myspace_schema.theme_css_base64);
+      const resolvedHtml = await resolveMedia(data.myspace_schema.html_content || `<h1>Profile for ${data.username}</h1>`);
+
       setViewingProfile({
-        css: data.myspace_schema.theme_css_base64,
-        html: data.myspace_schema.html_content || `<h1>Profile for ${data.username}</h1>`
+        css: resolvedCss,
+        html: resolvedHtml
       });
       setFeedbackStatus('Showing profile for: ' + newKey);
       setTimeout(() => setFeedbackStatus(''), 3000);
@@ -167,7 +193,11 @@ const App = () => {
         body: JSON.stringify({ dht_key: data.dht_key, username })
       });
       fetchDiscovery();
-      setViewingProfile({ css, html });
+
+      const resolvedCss = await resolveMedia(css);
+      const resolvedHtml = await resolveMedia(html);
+      setViewingProfile({ css: resolvedCss, html: resolvedHtml });
+
       setFeedbackStatus('Profile published to Veilid!');
       setTimeout(() => setFeedbackStatus(''), 3000);
     } catch (e) {
@@ -219,19 +249,6 @@ const App = () => {
           </div>
           <div className="flex gap-2">
               <button
-                onClick={() => setActiveTab('social')}
-                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${activeTab === 'social' ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
-              >
-                  Social Feed
-              </button>
-              <button
-                onClick={() => setActiveTab('dao')}
-                className={`px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 transition-all ${activeTab === 'dao' ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
-              >
-                  <Gavel size={16} />
-                  Governance DAO
-              </button>
-              <button
                 onClick={handlePanic}
                 title="Panic: Destructive Logout"
                 className="px-4 py-2 rounded-lg bg-red-50 text-red-600 border border-red-100 hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 font-bold text-sm"
@@ -252,57 +269,29 @@ const App = () => {
         </div>
       </header>
 
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-        <div className="lg:col-span-8 space-y-10">
-          {activeTab === 'social' ? (
-              <>
-                <section>
-                    <h2 className="text-2xl font-bold mb-4 text-gray-800">Sovereign Profile Preview</h2>
-                    <div className="border rounded-2xl overflow-hidden shadow-xl bg-white aspect-video lg:aspect-auto lg:h-[500px]">
-                    {viewingProfile ? (
-                        <ProfileContainer
-                        cssStyles={viewingProfile.css}
-                        htmlContent={viewingProfile.html}
-                        />
-                    ) : (
-                        <div className="h-full flex items-center justify-center text-gray-400 italic">
-                        Publish a profile to see it here
-                        </div>
-                    )}
-                    </div>
-                </section>
-                <ProfileEditor onSave={handleSaveProfile} isSaving={isSavingProfile} />
-              </>
-          ) : (
-              <section className="space-y-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-800">Governance Proposals</h2>
-                    <button
-                        onClick={() => setShowProposalForm(true)}
-                        className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-purple-700 transition-all shadow-lg shadow-purple-100"
-                    >
-                        <Plus size={18} />
-                        New Proposal
-                    </button>
+      <main className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Identity & Profile */}
+        <aside className="lg:col-span-3 space-y-8">
+          <section>
+              <h2 className="text-xl font-bold mb-4 text-gray-800">Sovereign Profile Preview</h2>
+              <div className="border rounded-2xl overflow-hidden shadow-xl bg-white aspect-video lg:aspect-auto lg:h-[500px]">
+              {viewingProfile ? (
+                  <ProfileContainer
+                  cssStyles={viewingProfile.css}
+                  htmlContent={viewingProfile.html}
+                  />
+              ) : (
+                  <div className="h-full flex items-center justify-center text-gray-400 italic text-sm p-4 text-center">
+                  Publish a profile to see it here
                   </div>
+              )}
+              </div>
+          </section>
+          <ProfileEditor onSave={handleSaveProfile} isSaving={isSavingProfile} />
+        </aside>
 
-                  {showProposalForm && (
-                      <DAOProposalForm
-                        proposerId={identity.dht_key}
-                        onCancel={() => setShowProposalForm(false)}
-                        onSuccess={() => {
-                            setShowProposalForm(false);
-                            fetchDAOProposals();
-                        }}
-                      />
-                  )}
-
-                  <DAOProposalList proposals={daoProposals} onVote={handleVote} />
-              </section>
-          )}
-        </div>
-
-        <aside className="lg:col-span-4 space-y-8">
+        {/* Center Column: Feed & Governance */}
+        <div className="lg:col-span-6 space-y-10">
           <section className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
             <h2 className="text-xl font-bold mb-4 text-gray-800">Your Home Feed</h2>
 
@@ -337,18 +326,51 @@ const App = () => {
             </div>
           </section>
 
-          <section className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm">
+          <section className="space-y-6 pt-6 border-t border-gray-100">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <Gavel size={24} className="text-purple-600" />
+                  <h2 className="text-2xl font-bold text-gray-800">Governance Proposals</h2>
+                </div>
+                <button
+                    onClick={() => setShowProposalForm(true)}
+                    title="Create a new DAO proposal broadcasted via Veilid RPC."
+                    className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-purple-700 transition-all shadow-lg shadow-purple-100 cursor-help"
+                >
+                    <Plus size={18} />
+                    New Proposal
+                </button>
+              </div>
+
+              {showProposalForm && (
+                  <DAOProposalForm
+                    proposerId={identity.dht_key}
+                    onCancel={() => setShowProposalForm(false)}
+                    onSuccess={() => {
+                        setShowProposalForm(false);
+                        fetchDAOProposals();
+                    }}
+                  />
+              )}
+
+              <DAOProposalList proposals={daoProposals} onVote={handleVote} />
+          </section>
+        </div>
+
+        {/* Right Column: Discovery & Feedback */}
+        <aside className="lg:col-span-3 space-y-8">
+          <section title="This discovery hub is populated securely from your local SQLite cache." className="p-6 bg-white rounded-2xl border border-gray-200 shadow-sm cursor-help">
             <h2 className="text-xl font-bold mb-4 text-gray-800">Discover Profiles</h2>
             <div className="space-y-3">
               {discoveredKeys.length > 0 ? discoveredKeys.map(k => (
                 <div key={k.dht_key} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded-lg group">
-                  <div>
-                    <p className="font-bold text-sm text-gray-700">{k.username}</p>
-                    <p className="text-[10px] font-mono text-gray-400 truncate w-32">{k.dht_key}</p>
+                  <div className="overflow-hidden">
+                    <p className="font-bold text-sm text-gray-700 truncate">{k.username}</p>
+                    <p className="text-[10px] font-mono text-gray-400 truncate">{k.dht_key}</p>
                   </div>
                   <button
                     onClick={() => { setNewKey(k.dht_key); }}
-                    className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity ml-2 shrink-0"
                   >
                     Select
                   </button>
@@ -389,7 +411,7 @@ const App = () => {
               />
               <button
                 onClick={handleFeedbackSubmit}
-                className="w-full py-2 bg-gray-100 text-gray-900 font-bold rounded-lg hover:bg-white transition-all"
+                className="w-full py-2 bg-gray-100 text-gray-900 font-bold rounded-lg hover:bg-white transition-all text-sm"
               >
                 Submit
               </button>

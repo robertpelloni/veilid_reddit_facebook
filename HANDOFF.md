@@ -18,5 +18,6 @@ The Veilid-powered decentralized social network has reached its v1.1.0 stable re
 
 ### Next Steps for Successor Models
 - **Real-world Stress Testing**: Gather user feedback via the established `FEEDBACK.md` channels.
-- **Tauri v2 Upgrade**: Migrate to the latest Tauri APIs for improved cross-platform security.
-- **Mobile Foundation**: Use the existing Go core logic as the backbone for a Flutter-based mobile companion app.
+- **Tauri v2 Upgrade**: Migrate to the latest Tauri APIs for improved cross-platform security. (COMPLETED)
+- **Cryptographic Voting**: Integrate the signed vote aggregation with the DHT. (COMPLETED)
+- **Mobile Foundation**: Use the existing Go core logic as the backbone for a Flutter-based mobile companion app. (SCAFFOLDED)
