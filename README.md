@@ -1,130 +1,54 @@
-╔══════════════════════════════════════════════════════════════════════════════╗
-║                                                                              ║
-║                     ██╗   ██╗███╗   ██╗██████╗ ███████╗██████╗              ║
-║                     ██║   ██║████╗  ██║██╔══██╗██╔════╝██╔══██╗             ║
-║                     ██║   ██║██╔██╗ ██║██║  ██║█████╗  ██████╔╝             ║
-║                     ██║   ██║██║╚██╗██║██║  ██║██╔══╝  ██╔══██╗             ║
-║                     ╚██████╔╝██║ ╚████║██████╔╝███████╗██║  ██║             ║
-║                      ╚═════╝ ╚═╝  ╚═══╝╚═════╝ ╚══════╝╚═╝  ╚═╝             ║
-║                                                                              ║
-║                     ██████╗ ██████╗ ███╗   ██╗███████╗████████╗██████╗      ║
-║                    ██╔════╝██╔═══██╗████╗  ██║██╔════╝╚══██╔══╝██╔══██╗     ║
-║                    ██║     ██║   ██║██╔██╗ ██║███████╗   ██║   ██████╔╝     ║
-║                    ██║     ██║   ██║██║╚██╗██║╚════██║   ██║   ██╔══██╗     ║
-║                    ╚██████╗╚██████╔╝██║ ╚████║███████║   ██║   ██║  ██║     ║
-║                     ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚═╝  ╚═╝     ║
-║                                                                              ║
-║                     █████╗ ██╗     ██████╗ ██╗  ██╗ █████╗                  ║
-║                    ██╔══██╗██║     ██╔══██╗██║  ██║██╔══██╗                 ║
-║                    ███████║██║     ██████╔╝███████║███████║                 ║
-║                    ██╔══██║██║     ██╔═══╝ ██╔══██║██╔══██║                 ║
-║                    ██║  ██║███████╗██║     ██║  ██║██║  ██║                 ║
-║                    ╚═╝  ╚═╝╚══════╝╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝                 ║
-║                                                                              ║
-║                    ╔══════════════════════════════════════╗                  ║
-║                    ║     ⚠️  ALPHA SOFTWARE  ⚠️           ║                  ║
-║                    ║  EXPECT BREAKING CHANGES & BUGS     ║                  ║
-║                    ║  NOT READY FOR PRODUCTION USE       ║                  ║
-║                    ╚══════════════════════════════════════╝                  ║
-║                                                                              ║
-╚══════════════════════════════════════════════════════════════════════════════╝
+# Veilid Reddit MySpace (veilid_reddit_facebook)
 
-# Veilid Reddit MySpace
+A prototype desktop social app in the shape of "Reddit meets MySpace" —
+threaded posts plus heavily personalized profile pages — designed to run
+over the Veilid P2P network instead of a central server. (The repo name
+says "facebook"; the app itself is the Reddit/MySpace concept in
+`VISION.md`.)
 
-**A Decentralized, Serverless, Sovereign Social Fabric.**
+## What is actually here
 
-Veilid Reddit MySpace is an open-source social network that combines the content aggregation and threaded discussions of **Reddit** with the hyper-personalization of **MySpace**, built entirely on the **Veilid P2P network protocol**.
+- **Frontend** — React 18 + TypeScript + Vite + Tailwind (`src/`:
+  `main.tsx` ~19 KB, `components/`, `hooks/`, `services/`, vitest tests in
+  `src/test/`). Package name: `veilid-reddit-myspace`.
+- **Desktop shell** — Tauri 2 (`src-tauri/`, with a `background/` dir).
+- **Go sidecar** — intended as a local service holding the SQLite cache
+  (`go.mod` depends only on `mattn/go-sqlite3`). Note: **no Go source files
+  are committed at the root** — what ships in the repo is a prebuilt
+  13 MB `staging_sidecar_bin` binary.
+- **Mobile experiments** — `mobile-bootstrap/`, `my_space_mobile/`.
+- A large paper trail: `API_DOCUMENTATION.md`, `TESTNET.md`,
+  `STAGING.md`, `DEPLOY.md`, `UAT.md`, `RELEASE_NOTES_V1.1.0.md`,
+  `DAO_ANALYSIS.md`, `MESSAGING_ANALYSIS.md`, and more.
 
-Unlike traditional social networks, there are no central servers, no trackers, and no corporate gatekeepers. Every user owns their data, their identity, and their space.
+The Veilid node itself is an **external prerequisite**: the app expects a
+running `veilid-core` daemon (see the old quick-start in git history);
+nothing in this repo vendors or starts one, and the P2P feature set
+(sovereign identity, AppMessage messaging, P2P discovery) is design +
+integration scaffolding around that daemon, exercised at most on a local
+testnet setup (`TESTNET_MANIFEST.json`, `verify_testnet_ui.js`).
 
----
+Version numbers in the repo disagree: `package.json` says `1.1.0-prod`,
+`VERSION.md` says `1.1.3-prod`, and a June 2026 commit is titled "Gold
+Master Final Polish". There are no GitHub releases attached to the repo,
+and no license file despite the old README's "open-source" framing — treat
+the version labels as agent-era staging names, not shipped releases.
 
-## 🚀 Key Features
+## Development
 
-- **Sovereign Identity:** Your identity is a cryptographic Routing Pair on the Veilid network. You own your keys; you own your presence.
-- **MySpace Personalization:** Design your own "Subreddit" (profile) using custom CSS and HTML. Express yourself without constraints.
-- **Secure Sandboxing:** User-provided styles and content are rendered in a strictly isolated, null-origin environment to ensure total security.
-- **Decentralized Discovery:** Find and subscribe to other sovereign subreddits via a local registry and P2P discovery hub.
-- **Real-time P2P Messaging:** Send and receive private messages directly between nodes using the Veilid AppMessage protocol.
-- **Local-First Architecture:** All your data, subscriptions, and cached feeds stay on your device in a secure SQLite database.
+Prerequisites: Node 20+, Go 1.22+ (with CGO), Rust/Cargo for Tauri, and a
+locally running Veilid core.
 
----
+```bash
+npm install
+npm run dev          # frontend only
+npm run tauri dev    # desktop shell
+npm test             # vitest
+./build-all.sh
+```
 
-## 🏗️ Architecture
+## Status
 
-The application uses a modular, multi-process architecture designed for security and P2P performance:
-
-1.  **Frontend (React/TypeScript):** A modern, responsive UI built with Vite and Tailwind CSS.
-2.  **Desktop Shell (Tauri):** A lightweight Rust-based wrapper that provides native desktop capabilities.
-3.  **Background Sidecar (Go):** A high-performance service that manages the local SQLite cache and communicates with the `veilid-core` daemon via JSON-RPC.
-
----
-
-## 🚀 Deployment
-
-The project supports several deployment targets depending on your environment:
-
-- **Local Development:** Ideal for UI work and local testing. Follow the [Quick Start](#🛠️-quick-start) below.
-- **Staging & Testnet:** For multi-node verification and public P2P testing. See [STAGING.md](STAGING.md) and [TESTNET.md](TESTNET.md).
-- **Production Deployment:** Hardened release builds for public distribution. See [DEPLOY.md](DEPLOY.md).
-
-The CI/CD pipeline (GitHub Actions) automatically handles multi-platform builds and releases. Refer to the [CI/CD Pipeline](DEPLOY.md#cicd-pipeline) documentation for details.
-
----
-
-## 🛠️ Quick Start
-
-### Prerequisites
-- [Go v1.22+](https://golang.org/dl/) (Requires CGO and a C compiler like GCC)
-- [Node.js v20+](https://nodejs.org/)
-- [Rust & Cargo](https://rustup.rs/) (For Tauri and Veilid)
-- [Veilid Core](https://veilid.com/download/) (Must be running locally or accessible via network)
-
-### Installation
-1.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/robertpelloni/veilid_reddit_facebook.git
-    git submodule update --init --recursive
-    cd veilid_reddit_facebook
-    ```
-2.  **Install Dependencies:**
-    ```bash
-    npm install
-    go mod download
-    ```
-3.  **Run in Development Mode:**
-    ```bash
-    npm run tauri dev
-    ```
-
----
-
-## 📖 Documentation Map
-
-For more in-depth information, please refer to our comprehensive documentation suite:
-
-- **For Users:**
-  - [User Manual](USER_MANUAL.md): How to use the app and customize your profile.
-  - [UAT Plan](UAT.md): Scenarios for verifying core functionality.
-- **For Developers:**
-  - [API Documentation](API_DOCUMENTATION.md): Details on the Go sidecar's HTTP endpoints.
-  - [Deployment Guide](DEPLOY.md): Hardened production build and CI/CD instructions.
-  - [Roadmap](ROADMAP.md): Project milestones and future phases.
-  - [Memory](MEMORY.md): Internal architectural traits and design choices.
-- **Project Vision:**
-  - [Vision Statement](VISION.md): The core philosophy behind the project.
-  - [Ideas](IDEAS.md): Aggressive ideas for future expansion.
-
----
-
-## 🤝 Contributing
-
-We follow a **Continuous Autonomous Execution** protocol. For more details on the engineering standards and agentic workflows, see [AGENTS.md](AGENTS.md).
-
----
-
-## 📄 License
-
-This project is open-source. See the repository for licensing details.
-
-*Built with ❤️ for the P2P Revolution.*
+Burst of agent-driven development in June 2026; dormant since (latest
+commit is an automated checkpoint, 2026-10-19). A staging prototype with a
+real frontend and shell — not a launched decentralized social network.
