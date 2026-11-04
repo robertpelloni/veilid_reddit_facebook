@@ -6,9 +6,9 @@ import (
 	"fmt"
 )
 
-// VerifySignature checks if a signature is valid for a given message and public key.
+// VerifyHexSignature checks if a hex signature is valid for a given message and public key.
 // In this P2P network, the PublicSigningKey is often the AuthorID (DHT Key prefix).
-func VerifySignature(publicKeyHex, signatureHex string, message []byte) (bool, error) {
+func VerifyHexSignature(publicKeyHex, signatureHex string, message []byte) (bool, error) {
 	pubKey, err := hex.DecodeString(publicKeyHex)
 	if err != nil {
 		return false, fmt.Errorf("invalid public key hex: %v", err)

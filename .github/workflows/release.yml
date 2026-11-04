@@ -45,8 +45,10 @@ jobs:
           # Tauri v1 expects sidecar in src-tauri/bin/ and registered as "sidecar" in tauri.conf.json
           mkdir -p src-tauri/bin
           go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
+          cp "src-tauri/bin/sidecar-$TARGET_TRIPLE" "src-tauri/sidecar-$TARGET_TRIPLE"
           if [ "${{ matrix.platform }}" == "windows-latest" ]; then
             mv "src-tauri/bin/sidecar-$TARGET_TRIPLE" "src-tauri/bin/sidecar-$TARGET_TRIPLE.exe"
+            mv "src-tauri/sidecar-$TARGET_TRIPLE" "src-tauri/sidecar-$TARGET_TRIPLE.exe"
           fi
 
       - name: build tauri app

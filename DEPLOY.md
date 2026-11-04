@@ -23,7 +23,8 @@ chmod +x setup-env.sh
    ```bash
    # Example for x86_64 Linux
    mkdir -p src-tauri/bin
-   go build -o src-tauri/bin/sidecar-x86_64-unknown-linux-gnu ./src-tauri/background/main.go
+go build -ldflags="-s -w" -o src-tauri/bin/sidecar-x86_64-unknown-linux-gnu ./src-tauri/background/main.go
+cp src-tauri/bin/sidecar-x86_64-unknown-linux-gnu src-tauri/sidecar-x86_64-unknown-linux-gnu
    ```
 3. Start the application using Tauri v2:
    ```bash
