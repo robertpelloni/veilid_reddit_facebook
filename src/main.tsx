@@ -8,6 +8,7 @@ import { FeedAggregator } from './services/aggregator';
 import { DAOProposalList, DAOProposal } from './components/DAO/DAOProposalList';
 import { DAOProposalForm } from './components/DAO/DAOProposalForm';
 import { CommentThread } from './components/CommentThread';
+import { SubredditWikiTab } from './components/SubredditWikiTab';
 import { Gavel, Plus, LogOut, Skull } from 'lucide-react';
 import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
@@ -354,6 +355,10 @@ const App = () => {
               )}
 
               <DAOProposalList proposals={daoProposals} onVote={handleVote} />
+          </section>
+
+          <section className="pt-6 border-t border-gray-100">
+              <SubredditWikiTab peerId={identity.dht_key} />
           </section>
         </div>
 
