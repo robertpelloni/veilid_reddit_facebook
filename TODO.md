@@ -11,5 +11,5 @@
 - [x] Integrated media player for profile background audio.
 
 ## Long-term Research
-- [ ] Explore CRDTs for collaborative subreddit editing.
+- [x] Explore and implement CRDTs for collaborative subreddit editing (`SubredditCRDTDoc` with Lamport logical clocks & deterministic convergence).
 - [ ] Investigate WASM-based Veilid core for browser-only mode.
