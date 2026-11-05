@@ -18,7 +18,7 @@ The Veilid-powered decentralized social network has reached its v1.1.0-prod "Gol
 - **Artifacts**: Production builds (.deb, .rpm, .AppImage) finalized in the `release/v1.1.0-prod/` directory.
 
 ### Next Steps for Successor Models
-- **Mainnet Monitoring**: Observe peer-to-peer propagation reliability on the public Veilid mainnet.
-- **Tauri v2 Migration & Automated Pipeline**: Upgraded to Tauri v2. Configured native system tray with server termination lifecycle and automated the compilation and bundling of `sidecar-x86_64-unknown-linux-gnu` in `.github/workflows/release.yml` and `build-all.sh`.
-- **CRDT Collaborative Subreddit Wiki**: Implemented CvRDT state machine (`SubredditCRDTDoc`) and interactive dashboard UI (`SubredditWikiTab`) supporting offline edits, peer state export, and deterministic distributed convergence.
-- **Mobile Companion**: Port the core Go sidecar logic to Flutter/Dart for a native mobile experience.
+- **Real-world Stress Testing**: Gather user feedback via the established `FEEDBACK.md` channels.
+- **Tauri v2 Upgrade**: Migrate to the latest Tauri APIs for improved cross-platform security. (COMPLETED)
+- **Cryptographic Voting**: Integrate the signed vote aggregation with the DHT. (COMPLETED)
+- **Mobile Foundation**: Use the existing Go core logic as the backbone for a Flutter-based mobile companion app. (SCAFFOLDED)

@@ -356,10 +356,6 @@ const App = () => {
 
               <DAOProposalList proposals={daoProposals} onVote={handleVote} />
           </section>
-
-          <section className="pt-6 border-t border-gray-100">
-              <SubredditWikiTab peerId={identity.dht_key} />
-          </section>
         </div>
 
         {/* Right Column: Discovery & Feedback */}
