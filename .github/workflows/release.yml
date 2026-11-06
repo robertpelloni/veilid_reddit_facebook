@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [macos-latest, ubuntu-20.04, windows-latest]
+        platform: [macos-latest, ubuntu-22.04, windows-latest]
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -30,10 +30,10 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-20.04'
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf libsoup-3.0-dev
 
       - name: install frontend dependencies
         run: npm install
@@ -41,15 +41,8 @@ jobs:
       - name: Build Go Sidecar
         shell: bash
         run: |
-          TARGET_TRIPLE=$(rustc -Vv | grep host | cut -d ' ' -f 2)
-          # Tauri v1 expects sidecar in src-tauri/bin/ and registered as "sidecar" in tauri.conf.json
-          mkdir -p src-tauri/bin
-          go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
-          cp "src-tauri/bin/sidecar-$TARGET_TRIPLE" "src-tauri/sidecar-$TARGET_TRIPLE"
-          if [ "${{ matrix.platform }}" == "windows-latest" ]; then
-            mv "src-tauri/bin/sidecar-$TARGET_TRIPLE" "src-tauri/bin/sidecar-$TARGET_TRIPLE.exe"
-            mv "src-tauri/sidecar-$TARGET_TRIPLE" "src-tauri/sidecar-$TARGET_TRIPLE.exe"
-          fi
+          chmod +x scripts/build_sidecar_matrix.sh
+          ./scripts/build_sidecar_matrix.sh
 
       - name: build tauri app
         uses: tauri-apps/tauri-action@v0
