@@ -39,9 +39,9 @@ Note: With the Tauri v2 Migration, the application leverages `@tauri-apps/plugin
 For production, use the release flags for both the sidecar and the Tauri shell. Ensure the sidecar is placed in `src-tauri/bin/` with the correct target triple suffix.
 
 ```bash
-# Build Go sidecar with stripping and optimizations
+# Build Go sidecar with stripping and optimizations using the matrix builder
 TARGET_TRIPLE=$(rustc -Vv | grep host | cut -d ' ' -f 2)
-go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
+./scripts/build_sidecar_matrix.sh "$TARGET_TRIPLE"
 
 # Build Tauri Production Bundle
 npm run tauri build

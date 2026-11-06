@@ -7,10 +7,7 @@ set -e
 TARGET_TRIPLE=$(rustc -Vv | grep host | cut -d ' ' -f 2)
 
 echo "--- Building Go Sidecar for $TARGET_TRIPLE ---"
-mkdir -p src-tauri/bin
-go build -ldflags="-s -w" -o "src-tauri/bin/sidecar-$TARGET_TRIPLE" ./src-tauri/background/main.go
-# Tauri externalBin lookup expects binary in src-tauri/
-cp "src-tauri/bin/sidecar-$TARGET_TRIPLE" "src-tauri/sidecar-$TARGET_TRIPLE"
+./scripts/build_sidecar_matrix.sh "$TARGET_TRIPLE"
 
 echo "--- Building Frontend ---"
 npm install

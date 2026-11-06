@@ -2,10 +2,10 @@
 
 ## [1.1.4-prod] - 2026-11-04
 ### Added
+- **Cross-Platform Sidecar Matrix Automation**: Created `scripts/build_sidecar_matrix.sh` automating target triple mapping, compiler flags, and dual-location staging (`src-tauri/bin/` and `src-tauri/`) for Tauri v2.
 - **Subreddit Collaborative Editing CRDT**: Implemented state-based Conflict-Free Replicated Data Type (`SubredditCRDTDoc`) in `src/services/crdt.ts` with Last-Write-Wins (LWW) element registers, Lamport logical clocks, and deterministic tie-breaking.
 - **Subreddit Wiki UI**: Added `SubredditWikiTab` component in `src/components/SubredditWikiTab.tsx` providing real-time local commit, state export, and peer CRDT state merging.
-- **Automated Sidecar Deployment Pipeline**: Integrated `sidecar-x86_64-unknown-linux-gnu` target triple build into `.github/workflows/release.yml` with Ubuntu 22.04 runner, WebKitGTK 4.1, and Ayatana AppIndicator libraries.
-- **Tauri v2 ExternalBin Synchronization**: Updated `build-all.sh` and release workflow to automatically position sidecar target binaries in `src-tauri/` root alongside `src-tauri/bin/` to satisfy Tauri v2 bundle resolution.
+- **Automated Sidecar Deployment Pipeline**: Integrated matrix target triple build into `.github/workflows/release.yml` with Ubuntu 22.04 runner, WebKitGTK 4.1, and Ayatana AppIndicator libraries.
 - **Crypto Signature Disambiguation**: Resolved duplicate identifier conflicts between hex signature verification (`VerifyHexSignature`) and DAO base64 vote verification.
 
 ## [1.1.3-prod] - 2026-06-18
