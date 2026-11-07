@@ -89,8 +89,19 @@ Every push and pull request to the `main` branch triggers the **Test Suite** wor
 ### Automated Releases
 Whenever a new tag matching `v*` is pushed, the `Release` workflow is triggered:
 1. **Multi-platform Build:** Concurrently builds for macOS, Ubuntu, and Windows.
-2. **Sidecar Compilation:** Automatically compiles the Go backend for the target architecture.
+2. **Sidecar Compilation:** Automatically compiles the Go backend for the target architecture using `./scripts/build_sidecar_matrix.sh "$TARGET_TRIPLE"`.
 3. **Artifact Distribution:** Creates a draft GitHub Release with bundled installers and binaries.
+
+## Sidecar Build Matrix Script
+
+The script `scripts/build_sidecar_matrix.sh` standardizes building the Go sidecar across supported target triples:
+- `x86_64-unknown-linux-gnu` (Linux x86_64)
+- `aarch64-unknown-linux-gnu` (Linux ARM64)
+- `x86_64-pc-windows-msvc` / `x86_64-pc-windows-gnu` (Windows x86_64)
+- `x86_64-apple-darwin` (macOS Intel)
+- `aarch64-apple-darwin` (macOS Apple Silicon)
+
+Staging is performed to `src-tauri/bin/sidecar-$TARGET` and `src-tauri/sidecar-$TARGET` to support both Tauri bundle creation and cargo check resolution.
 
 ## UAT and Staging Environments
 For detailed instructions on setting up non-production environments, refer to `UAT.md`, `STAGING.md`, and `TESTNET.md`.

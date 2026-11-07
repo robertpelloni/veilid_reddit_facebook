@@ -12,6 +12,7 @@ export const SubredditWikiTab: React.FC<SubredditWikiTabProps> = ({ peerId }) =>
   const [rules, setRules] = useState('');
   const [sidebar, setSidebar] = useState('');
   const [moderators, setModerators] = useState<string[]>([peerId]);
+  const [newModerator, setNewModerator] = useState('');
   const [peerStateInput, setPeerStateInput] = useState('');
   const [mergeStatus, setMergeStatus] = useState<string | null>(null);
 
@@ -142,10 +143,35 @@ export const SubredditWikiTab: React.FC<SubredditWikiTabProps> = ({ peerId }) =>
         </div>
 
         <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <div className="flex items-center gap-2 mb-2">
-              <Shield className="text-amber-600" size={16} />
-              <h3 className="text-sm font-bold text-gray-800">Active Moderators (LWW Set)</h3>
+          <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Shield className="text-amber-600" size={16} />
+                <h3 className="text-sm font-bold text-gray-800">Active Moderators (LWW Set)</h3>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="peer_pubkey..."
+                value={newModerator}
+                onChange={(e) => setNewModerator(e.target.value)}
+                className="flex-1 p-2 bg-white border border-gray-200 rounded-lg text-xs font-mono focus:outline-indigo-500"
+              />
+              <button
+                onClick={() => {
+                  if (newModerator.trim()) {
+                    doc.addModerator(newModerator.trim());
+                    setModerators(doc.getActiveModerators());
+                    setNewModerator('');
+                    setMergeStatus('Moderator added to LWW Set.');
+                    setTimeout(() => setMergeStatus(null), 3000);
+                  }
+                }}
+                className="px-3 py-1.5 bg-gray-800 hover:bg-black text-white text-xs font-bold rounded-lg transition"
+              >
+                Add
+              </button>
             </div>
             <div className="flex flex-wrap gap-2">
               {moderators.map((m) => (
@@ -154,7 +180,7 @@ export const SubredditWikiTab: React.FC<SubredditWikiTabProps> = ({ peerId }) =>
                   className="px-2.5 py-1 bg-white border border-gray-200 text-gray-700 text-xs rounded-full font-mono flex items-center gap-1"
                 >
                   <Users size={12} className="text-gray-400" />
-                  {m.substring(0, 14)}...
+                  {m.length > 18 ? `${m.substring(0, 14)}...` : m}
                 </span>
               ))}
             </div>

@@ -2,12 +2,16 @@ package main
 
 import (
 	"bytes"
+	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
+	"github.com/robertpelloni/bobcoin/go-lattice"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/client"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/schema"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/storage"
@@ -56,6 +60,7 @@ func TestIntegrationAPI(t *testing.T) {
 	state := &AppState{
 		Veilid:  vClient,
 		Storage: store,
+		Lattice: lattice.New(),
 	}
 
 	t.Run("Status Endpoint", func(t *testing.T) {
@@ -168,11 +173,24 @@ func TestIntegrationAPI(t *testing.T) {
 	})
 
 	t.Run("Voting API", func(t *testing.T) {
+		pubKey, privKey, err := ed25519.GenerateKey(nil)
+		if err != nil {
+			t.Fatalf("Failed to generate ed25519 key: %v", err)
+		}
+		pubKeyBase64 := base64.StdEncoding.EncodeToString(pubKey)
+		voterID := pubKeyBase64
+		proposalID := "prop-123"
+		weight := 1.0
+
+		payload := fmt.Sprintf("%s:%s:%f", proposalID, voterID, weight)
+		sig := ed25519.Sign(privKey, []byte(payload))
+		sigBase64 := base64.StdEncoding.EncodeToString(sig)
+
 		vote := schema.DAOVote{
-			ProposalID: "prop-123",
-			VoterID:    "alice",
-			Weight:     1.0,
-			Signature:  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			ProposalID: proposalID,
+			VoterID:    voterID,
+			Weight:     weight,
+			Signature:  sigBase64,
 		}
 		body, _ := json.Marshal(vote)
 		req := httptest.NewRequest("POST", "/dao/vote", bytes.NewBuffer(body))
@@ -180,7 +198,7 @@ func TestIntegrationAPI(t *testing.T) {
 		state.handleDAOVote(rr, req)
 
 		if rr.Code != http.StatusOK {
-			t.Errorf("DAO vote failed: %d", rr.Code)
+			t.Errorf("DAO vote failed: %d, body: %s", rr.Code, rr.Body.String())
 		}
 	})
 
