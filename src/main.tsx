@@ -5,13 +5,17 @@ import { ProfileContainer } from './components/ProfileContainer';
 import { ProfileEditor } from './components/ProfileEditor';
 import { NetworkStatus } from './components/NetworkStatus';
 import { FeedAggregator } from './services/aggregator';
-import { DAOProposalList, DAOProposal } from './components/DAO/DAOProposalList';
+import { DAOProposalList } from './components/DAO/DAOProposalList';
 import { DAOProposalForm } from './components/DAO/DAOProposalForm';
 import { CommentThread } from './components/CommentThread';
-import { SubredditWikiTab } from './components/SubredditWikiTab';
-import { Gavel, Plus, LogOut, Skull } from 'lucide-react';
+import { Gavel, Plus, LogOut, Skull, Download } from 'lucide-react';
 import { IdentityVault, SovereignIdentity } from './services/identity';
 import { SovereignOnboarding } from './components/SovereignOnboarding';
+import { useDiscovery } from './hooks/useDiscovery';
+import { useDAOProposals } from './hooks/useDAOProposals';
+import { Top8Friends } from './components/Top8Friends';
+import { MediaPlayer } from './components/MediaPlayer';
+import { signVotePayload } from './services/cryptoSignature';
 
 const aggregator = new FeedAggregator();
 const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
@@ -23,53 +27,13 @@ const App = () => {
   const [feedback, setFeedback] = useState('');
   const [feedbackStatus, setFeedbackStatus] = useState('');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [discoveredKeys, setDiscoveredKeys] = useState<any[]>([]);
   const [newPostTitle, setNewPostTitle] = useState('');
-  const [daoProposals, setDAOProposals] = useState<DAOProposal[]>([]);
   const [showProposalForm, setShowProposalForm] = useState(false);
 
+  const { discoveredKeys, fetchDiscovery } = useDiscovery();
+  const { daoProposals, fetchDAOProposals } = useDAOProposals();
+
   const [viewingProfile, setViewingProfile] = useState<{css: string, html: string} | null>(null);
-
-  const resolveMedia = async (content: string): Promise<string> => {
-    // Intercept ipfs://<hash> URLs and fetch them from the local sidecar gateway
-    const ipfsRegex = /ipfs:\/\/([A-Za-z0-9_]+)/g;
-    let resolvedContent = content;
-    const matches = Array.from(content.matchAll(ipfsRegex));
-
-    for (const match of matches) {
-      const fullUrl = match[0];
-      try {
-        const resp = await fetch(`http://127.0.0.1:1337/media/get?url=${encodeURIComponent(fullUrl)}`);
-        if (resp.ok) {
-          const { base64_data } = await resp.json();
-          resolvedContent = resolvedContent.replace(fullUrl, base64_data);
-        }
-      } catch (e) {
-        console.error(`Failed to resolve media for ${fullUrl}`, e);
-      }
-    }
-    return resolvedContent;
-  };
-
-  const fetchDiscovery = async () => {
-    try {
-      const resp = await fetch('http://127.0.0.1:1337/discovery');
-      if (resp.ok) {
-        const data = await resp.json();
-        setDiscoveredKeys(data || []);
-      }
-    } catch (e) { console.error(e); }
-  };
-
-  const fetchDAOProposals = async () => {
-    try {
-        const resp = await fetch('http://127.0.0.1:1337/dao/proposals');
-        if (resp.ok) {
-            const data = await resp.json();
-            setDAOProposals(data || []);
-        }
-    } catch (e) { console.error(e); }
-  };
 
   useEffect(() => {
     IdentityVault.get().then(savedId => {
@@ -211,13 +175,17 @@ const App = () => {
   const handleVote = async (id: string, weight: number) => {
     if (!identity) return;
     try {
+        // Cryptographic voting: Generate signature for the vote payload
+        const signature = await signVotePayload(id, identity.dht_key, weight, identity.private_key);
+
         await fetch('http://127.0.0.1:1337/dao/vote', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 proposal_id: id,
                 voter_id: identity.dht_key,
-                weight
+                weight,
+                signature
             })
         });
         fetchDAOProposals();
@@ -228,6 +196,23 @@ const App = () => {
       IdentityVault.clear();
       setIdentity(null);
       window.location.reload();
+  };
+
+  const handleExportIdentity = async () => {
+      try {
+          const binaryData = await IdentityVault.exportToBinary();
+          const blob = new Blob([binaryData], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `identity_backup_${identity?.dht_key.substring(0, 8)}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+      } catch (e) {
+          console.error("Failed to export identity", e);
+      }
   };
 
   if (!identity) {
@@ -263,27 +248,52 @@ const App = () => {
             <span className="text-xs font-bold text-gray-400 uppercase tracking-widest block mb-1">Authenticated as {identity.username}</span>
             <div className="flex items-center gap-3">
                 <p className="text-sm font-mono text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100 truncate max-w-[200px]">{identity.dht_key}</p>
-                <button onClick={() => { IdentityVault.clear(); setIdentity(null); }} className="text-gray-400 hover:text-red-500 transition-colors">
+                <button onClick={handleExportIdentity} title="Export Identity Backup" className="text-gray-400 hover:text-blue-500 transition-colors">
+                    <Download size={18} />
+                </button>
+                <button onClick={() => { IdentityVault.clear(); setIdentity(null); }} title="Log Out" className="text-gray-400 hover:text-red-500 transition-colors">
                     <LogOut size={18} />
                 </button>
             </div>
         </div>
       </header>
 
-      <main className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Identity & Profile */}
-        <aside className="lg:col-span-3 space-y-8">
-          <section>
-              <h2 className="text-xl font-bold mb-4 text-gray-800">Sovereign Profile Preview</h2>
-              <div className="border rounded-2xl overflow-hidden shadow-xl bg-white aspect-video lg:aspect-auto lg:h-[500px]">
-              {viewingProfile ? (
-                  <ProfileContainer
-                  cssStyles={viewingProfile.css}
-                  htmlContent={viewingProfile.html}
-                  />
-              ) : (
-                  <div className="h-full flex items-center justify-center text-gray-400 italic text-sm p-4 text-center">
-                  Publish a profile to see it here
+      <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-8 space-y-10">
+          {activeTab === 'social' ? (
+              <>
+                <section>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold text-gray-800">Sovereign Profile Preview</h2>
+                        <MediaPlayer src="https://actions.google.com/sounds/v1/water/rain_on_roof.ogg" title="Lo-Fi Beats to Relax/Code To" artist="Veilid Radio" />
+                    </div>
+                    <div className="border rounded-2xl overflow-hidden shadow-xl bg-white aspect-video lg:aspect-auto lg:h-[500px]">
+                    {viewingProfile ? (
+                        <ProfileContainer
+                        cssStyles={viewingProfile.css}
+                        htmlContent={viewingProfile.html}
+                        />
+                    ) : (
+                        <div className="h-full flex items-center justify-center text-gray-400 italic">
+                        Publish a profile to see it here
+                        </div>
+                    )}
+                    </div>
+                </section>
+                <Top8Friends />
+                <ProfileEditor onSave={handleSaveProfile} isSaving={isSavingProfile} />
+              </>
+          ) : (
+              <section className="space-y-6">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-gray-800">Governance Proposals</h2>
+                    <button
+                        onClick={() => setShowProposalForm(true)}
+                        className="bg-purple-600 text-white px-4 py-2 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-purple-700 transition-all shadow-lg shadow-purple-100"
+                    >
+                        <Plus size={18} />
+                        New Proposal
+                    </button>
                   </div>
               )}
               </div>
