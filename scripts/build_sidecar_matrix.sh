@@ -51,8 +51,8 @@ esac
 OUTPUT_BIN="$BIN_DIR/sidecar-$TARGET$EXTENSION"
 ROOT_BIN="$ROOT_TAURI_DIR/sidecar-$TARGET$EXTENSION"
 
-echo "Compiling ./src-tauri/background/main.go -> $OUTPUT_BIN (GOOS=${GOOS:-default}, GOARCH=${GOARCH:-default})"
-go build -ldflags="-s -w" -o "$OUTPUT_BIN" ./src-tauri/background/main.go
+echo "Compiling ./src-tauri/background -> $OUTPUT_BIN (GOOS=${GOOS:-default}, GOARCH=${GOARCH:-default})"
+go build -ldflags="-s -w" -o "$OUTPUT_BIN" ./src-tauri/background
 
 # Satisfy Tauri v2 bundle & cargo check externalBin lookup
 echo "Syncing binary to Tauri externalBin location -> $ROOT_BIN"
