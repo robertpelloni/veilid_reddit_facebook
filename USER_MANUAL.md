@@ -47,10 +47,39 @@ Use the **Discovery Hub** to see a list of users who have recently announced the
 
 ---
 
-## 4. Interaction and Safety
+## 4. Collaborative Subreddit CRDT Wiki
+
+The dashboard includes a real-time, decentralized collaborative Subreddit Wiki powered by state-based Conflict-Free Replicated Data Types (CvRDT).
+
+### How the CRDT Engine Works
+- **Last-Write-Wins (LWW) Registers:** Each field (`title`, `rules`, `sidebar`) tracks a monotonic Lamport logical timestamp and the editing `peerId`. Edits merge deterministically without central conflict resolution servers.
+- **Deterministic Peer Tie-Breaking:** If two peers edit a field simultaneously with the exact same logical timestamp, lexicographical peer ID tie-breaking guarantees every client converges to the identical value across the network.
+- **LWW Moderator Set:** Subreddit moderators are tracked in an add/remove tombstoned set. Adding a moderator or removing them preserves causality regardless of network delays or out-of-order syncs.
+
+### Working with the CRDT Wiki
+1. **Commit Local Changes:** Update the title, community rules, or sidebar markdown and click **Commit Local Changes** to update the local Lamport clock and state.
+2. **Export State:** Click **Export State** to copy the serialized JSON state representation directly to your clipboard.
+3. **Merge Remote State:** Paste another peer's exported CRDT JSON into the **Merge Remote Peer CRDT State** box and click **Merge Deterministically**. The engine automatically reconciles concurrent changes with zero data loss.
+4. **Moderator Management:** Add new moderator public keys to the LWW set. Active moderators are instantly visible as verified badges.
+
+---
+
+## 5. Automated Sidecar Matrix Architecture
+
+The application relies on a Go sidecar providing system services, P2P network routing, and cryptographic block-lattice accounting.
+
+### Multi-Platform Compilation Matrix
+The compilation process is managed by `scripts/build_sidecar_matrix.sh`:
+- **Target Triple Detection:** Automatically infers the Rust host triple (e.g., `x86_64-unknown-linux-gnu`, `aarch64-unknown-linux-gnu`, `x86_64-pc-windows-msvc`, `x86_64-apple-darwin`, `aarch64-apple-darwin`) or accepts an explicit argument.
+- **Tauri v2 Staging:** In Tauri v2, `bundle.externalBin` looks for binary targets staged in both `src-tauri/bin/` and `src-tauri/`. The script compiles the entire `./src-tauri/background` package and stages it simultaneously to satisfy cargo checks and desktop packaging.
+- **Compiler Optimizations:** Uses `-ldflags="-s -w"` to strip debug symbols and reduce sidecar footprint.
+
+---
+
+## 6. Interaction and Safety
 
 ### Voting and Comments
-(Note: Full decentralized comment trees and voting are coming in the next update. See ROADMAP.md)
+DAO quadratic voting is secured with ed25519 cryptographic signatures and liquid delegation power calculation.
 
 ### Security and Sandboxing
 To keep you safe from malicious code, all custom profiles are rendered in a **Strict Sandbox**.
@@ -60,7 +89,7 @@ To keep you safe from malicious code, all custom profiles are rendered in a **St
 
 ---
 
-## 5. Troubleshooting
+## 7. Troubleshooting
 
 - **"Failed to publish profile"**: Ensure the Go sidecar is running (it should start automatically). Check if you have an active internet connection.
 - **"Empty Feed"**: You haven't subscribed to anyone yet! Try registering your profile and looking for others in the Discovery Hub.
