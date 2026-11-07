@@ -6,6 +6,16 @@ set -euo pipefail
 
 TARGET="${1:-}"
 
+# Supported targets
+SUPPORTED_TARGETS=(
+    "x86_64-unknown-linux-gnu"
+    "aarch64-unknown-linux-gnu"
+    "x86_64-pc-windows-msvc"
+    "x86_64-pc-windows-gnu"
+    "x86_64-apple-darwin"
+    "aarch64-apple-darwin"
+)
+
 if [ -z "$TARGET" ]; then
     if command -v rustc >/dev/null 2>&1; then
         TARGET=$(rustc -Vv | grep host | cut -d ' ' -f 2)
@@ -44,19 +54,29 @@ case "$TARGET" in
         export GOARCH=arm64
         ;;
     *)
-        echo "Warning: Unrecognized target triple '$TARGET'. Defaulting to host Go environment."
+        echo "Warning: Target triple '$TARGET' is not in standard matrix (${SUPPORTED_TARGETS[*]}). Defaulting to host Go environment."
         ;;
 esac
 
 OUTPUT_BIN="$BIN_DIR/sidecar-$TARGET$EXTENSION"
 ROOT_BIN="$ROOT_TAURI_DIR/sidecar-$TARGET$EXTENSION"
 
-echo "Compiling ./src-tauri/background/main.go -> $OUTPUT_BIN (GOOS=${GOOS:-default}, GOARCH=${GOARCH:-default})"
-go build -ldflags="-s -w" -o "$OUTPUT_BIN" ./src-tauri/background/main.go
+echo "Compiling ./src-tauri/background -> $OUTPUT_BIN (GOOS=${GOOS:-default}, GOARCH=${GOARCH:-default})"
+go build -ldflags="-s -w" -o "$OUTPUT_BIN" ./src-tauri/background
+
+# Verify binary was created and is non-empty
+if [ ! -s "$OUTPUT_BIN" ]; then
+    echo "Error: Output binary $OUTPUT_BIN was not created or is empty!" >&2
+    exit 1
+fi
 
 # Satisfy Tauri v2 bundle & cargo check externalBin lookup
 echo "Syncing binary to Tauri externalBin location -> $ROOT_BIN"
 cp "$OUTPUT_BIN" "$ROOT_BIN"
 
+# Compute SHA-256 for release verification
+CHECKSUM=$(sha256sum "$OUTPUT_BIN" | cut -d ' ' -f 1)
+
 echo "=== Build Successful: $OUTPUT_BIN ==="
+echo "SHA-256: $CHECKSUM"
 ls -lh "$OUTPUT_BIN" "$ROOT_BIN"

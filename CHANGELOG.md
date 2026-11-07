@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## [1.1.5-prod] - 2026-11-07
+### Enhanced
+- **Collaborative CRDT Wiki Documentation**: Updated `USER_MANUAL.md` with complete documentation for the decentralized CRDT Subreddit Wiki, detailing LWW registers, Lamport logical clocks, deterministic peer tie-breaking, and LWW moderator sets.
+- **Sidecar Build Pipeline Documentation**: Added architecture and deployment guides in `USER_MANUAL.md` and `DEPLOY.md` detailing cross-compilation triples, symbol stripping, and Tauri v2 dual-location staging.
+- **Sidecar Build Matrix Hardening**: Updated `scripts/build_sidecar_matrix.sh` with supported matrix validation, empty binary verification, and SHA-256 checksum generation for verifiable builds.
+
 ## [1.1.4-prod] - 2026-11-04
 ### Added
 - **Cross-Platform Sidecar Matrix Automation**: Created `scripts/build_sidecar_matrix.sh` automating target triple mapping, compiler flags, and dual-location staging (`src-tauri/bin/` and `src-tauri/`) for Tauri v2.

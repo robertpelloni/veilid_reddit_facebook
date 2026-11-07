@@ -17,6 +17,7 @@ import (
 
 	"time"
 
+	"github.com/robertpelloni/bobcoin/go-lattice"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/client"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/core"
 	"github.com/robertpelloni/veilid_reddit_facebook/src-tauri/background/schema"
@@ -28,6 +29,7 @@ const DefaultSidecarPort = "1337"
 type AppState struct {
 	Veilid  *client.VeilidClient
 	Storage *storage.SQLiteStorage
+	Lattice *lattice.Lattice
 }
 
 func main() {
@@ -66,9 +68,13 @@ func main() {
 	state := &AppState{
 		Veilid:  v,
 		Storage: s,
+		Lattice: lattice.New(),
 	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("/bobcoin/balance", state.handleBobcoinBalance)
+	mux.HandleFunc("/bobcoin/transfer", state.handleBobcoinTransfer)
+	mux.HandleFunc("/bobcoin/faucet", state.handleBobcoinFaucet)
 	mux.HandleFunc("/publish", state.handlePublish)
 	mux.HandleFunc("/fetch", state.handleFetch)
 	mux.HandleFunc("/register", state.handleRegister)
