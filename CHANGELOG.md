@@ -1,5 +1,11 @@
 # CHANGELOG.md
 
+## [1.1.6-prod] - 2026-11-10
+### Added
+- **Browser-Only Veilid Fallback Client**: Implemented `BrowserVeilidClient` in `src/services/browser_veilid.ts` simulating DHT key storage, identities, posts, comments, and proposals using WebCrypto and local browser storage.
+- **Auto-Fallback & UI Status Indication**: Updated `NetworkStatus` to automatically detect sidecar status and seamlessly switch between Native Daemon mode (`127.0.0.1:1337`) and Browser-Only WebClient Mode with informative tooltips.
+- **Unit Testing**: Added unit tests in `src/services/browser_veilid.test.ts` (all 7 tests passing).
+
 ## [1.1.5-prod] - 2026-11-07
 ### Enhanced
 - **Collaborative CRDT Wiki Documentation**: Updated `USER_MANUAL.md` with complete documentation for the decentralized CRDT Subreddit Wiki, detailing LWW registers, Lamport logical clocks, deterministic peer tie-breaking, and LWW moderator sets.
