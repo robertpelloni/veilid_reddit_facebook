@@ -11,11 +11,9 @@ says "facebook"; the app itself is the Reddit/MySpace concept in
 - **Frontend** — React 18 + TypeScript + Vite + Tailwind (`src/`:
   `main.tsx` ~19 KB, `components/`, `hooks/`, `services/`, vitest tests in
   `src/test/`). Package name: `veilid-reddit-myspace`.
-- **Desktop shell** — Tauri 2 (`src-tauri/`, with a `background/` dir).
-- **Go sidecar** — intended as a local service holding the SQLite cache
-  (`go.mod` depends only on `mattn/go-sqlite3`). Note: **no Go source files
-  are committed at the root** — what ships in the repo is a prebuilt
-  13 MB `staging_sidecar_bin` binary.
+- **Desktop shell** — Tauri 2 (`src-tauri/`): strict v2 capabilities schema (`shell:default`), native system tray integration (`tray-icon` cargo feature) with window toggling and graceful sidecar/server child process termination.
+- **Go sidecar & Lattice** — local service holding SQLite cache, Veilid client routing, and the Bobcoin account-chain lattice (`src-tauri/background/`). Includes cross-platform compilation matrix script `scripts/build_sidecar_matrix.sh` targeting Linux (x86_64, aarch64), Windows, and macOS with symbol stripping and dual-staging for Tauri v2 bundles.
+- **Collaborative Subreddit Wiki (CRDT)** — state-based Conflict-Free Replicated Data Type (`SubredditCRDTDoc` in `src/services/crdt.ts` and `SubredditWikiTab` in `src/components/SubredditWikiTab.tsx`) featuring Last-Write-Wins (LWW) element registers, Lamport logical clocks, deterministic lexicographical peer tie-breaking, and tombstoned moderator sets.
 - **Mobile experiments** — `mobile-bootstrap/`, `my_space_mobile/`.
 - A large paper trail: `API_DOCUMENTATION.md`, `TESTNET.md`,
   `STAGING.md`, `DEPLOY.md`, `UAT.md`, `RELEASE_NOTES_V1.1.0.md`,

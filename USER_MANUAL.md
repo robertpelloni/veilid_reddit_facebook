@@ -7,6 +7,11 @@ Welcome to the future of sovereign social networking. This guide will help you n
 ### Launching the App
 When you open the application, the Go background service (the "sidecar") starts automatically. This service connects you to the Veilid P2P network.
 
+### Operating Modes & Dual Fallback
+The header displays a real-time network status indicator:
+- **Native Daemon Mode (`127.0.0.1:1337`)**: Operating in desktop mode with direct local Go daemon binding, SQLite caching, and native P2P DHT routing.
+- **Browser-Only Mode (`BrowserVeilidClient`)**: If the native Go sidecar is unavailable (e.g. running inside a browser sandbox or static deployment), the application gracefully falls back to WebCrypto-backed local DHT simulation. All identities, posts, comments, and profile data remain completely functional offline.
+
 ### Your Sovereign Identity
 On your first launch, a unique **Identity Key** is generated for you. This key represents your sovereign space on the network. You can find your key in the top right corner of the dashboard.
 - **Privacy Note:** Your key does not reveal your IP address or real-world identity.

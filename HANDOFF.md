@@ -1,24 +1,23 @@
 # HANDOFF.md
 
-## Session Summary (2026-06-07)
-The Veilid-powered decentralized social network has reached its v1.1.0-prod "Gold Master" milestone. This session finalized security hardening, UI refinement, and production testing, ensuring a private and robust user experience.
+## Session Summary - v1.1.6-prod
 
-### Major Achievements
-1.  **Onion-First Privacy**: Upgraded the P2P networking layer to default to 3-hop onion routing, protecting user IP addresses during all DHT and messaging operations.
-2.  **Identity Vault & Export**: Implemented AES-256-GCM encrypted local storage for sovereign identities and a secure export/backup mechanism.
-3.  **Advanced Sandboxing**: Implemented proactive stripping of tracking pixels and external resource calls in custom CSS/HTML to prevent IP leaks from malicious profiles.
-4.  **Midnight Stealth UI**: Launched a refined, low-light aesthetic with transparent tooltips for P2P process monitoring.
-5.  **Panic Protocol**: Integrated an instant session destruction "Panic Button" for high-stakes privacy environments.
-6.  **Code Maintenance**: Refactored the frontend into modular React hooks and added comprehensive unit tests for the FeedAggregator service.
+### Milestones Completed
+1. **Browser-Only Veilid Fallback Client (`src/services/browser_veilid.ts`)**:
+   - Implemented `BrowserVeilidClient` providing a simulated Veilid DHT environment for browser-only execution, static hosting, and offline mode.
+   - Generates 32-byte cryptographic keys using WebCrypto API and stores profiles, posts, comments, proposals, and discovery registries in browser storage.
+2. **Dynamic UI Network Status Indication**:
+   - Updated `NetworkStatus` to automatically detect sidecar availability (`http://127.0.0.1:1337/status`).
+   - Gracefully falls back to `BrowserVeilidClient` when sidecar is offline/unavailable, displaying a visual status badge and explanatory tooltip.
+3. **Comprehensive Unit Testing**:
+   - Added `src/services/browser_veilid.test.ts` with 7 tests covering identity generation, profile publishing/fetching, post handling, comment indexing, and DAO proposal provisioning (total: 23/23 Vitest tests passing).
+4. **Automated Cross-Platform Sidecar Build Pipeline**:
+   - Script `scripts/build_sidecar_matrix.sh` reliably produces binaries across Linux, Windows, and macOS triples with `-ldflags="-s -w"`, SHA-256 calculation, and Tauri v2 dual-staging.
+5. **Documentation & Versioning**:
+   - Sourced version `1.1.6-prod` in `VERSION.md`.
+   - Updated `CHANGELOG.md`, `TODO.md`, `USER_MANUAL.md`, and `DEPLOY.md`.
 
-### Final Project State
-- **Backend**: Go sidecar v1.1.0-prod with Routing Context management and SQLite caching.
-- **Frontend**: React/Vite/Tailwind with modularized hooks and enhanced security rendering.
-- **Testing**: Verified with Go integration suites, Vitest unit tests, and manual end-to-end production environment checks.
-- **Artifacts**: Production builds (.deb, .rpm, .AppImage) finalized in the `release/v1.1.0-prod/` directory.
-
-### Next Steps for Successor Models
-- **Mainnet Monitoring**: Observe peer-to-peer propagation reliability on the public Veilid mainnet.
-- **Tauri v2 Migration & Automated Matrix Pipeline**: Upgraded to Tauri v2. Configured native system tray with server termination lifecycle and automated cross-platform compilation via `scripts/build_sidecar_matrix.sh` across CI workflows and local build scripts.
-- **CRDT Collaborative Subreddit Wiki**: Implemented CvRDT state machine (`SubredditCRDTDoc`) and interactive dashboard UI (`SubredditWikiTab`) supporting offline edits, peer state export, and deterministic distributed convergence.
-- **Mobile Companion**: Port the core Go sidecar logic to Flutter/Dart for a native mobile experience.
+### Verification Commands
+- `npx vitest run` -> 6 files passed, 23 tests passed.
+- `go test -count=1 -race ./src-tauri/background/...` -> All Go packages passed cleanly with 0 race conditions.
+- `./scripts/build_sidecar_matrix.sh x86_64-unknown-linux-gnu` -> Successful compilation and SHA-256 verification.

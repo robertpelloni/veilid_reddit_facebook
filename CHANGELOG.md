@@ -1,5 +1,25 @@
 # CHANGELOG.md
 
+## [1.1.6-prod] - 2026-11-10
+### Added
+- **Browser-Only Veilid Fallback Client**: Implemented `BrowserVeilidClient` in `src/services/browser_veilid.ts` simulating DHT key storage, identities, posts, comments, and proposals using WebCrypto and local browser storage.
+- **Auto-Fallback & UI Status Indication**: Updated `NetworkStatus` to automatically detect sidecar status and seamlessly switch between Native Daemon mode (`127.0.0.1:1337`) and Browser-Only WebClient Mode with informative tooltips.
+- **Unit Testing**: Added unit tests in `src/services/browser_veilid.test.ts` (all 7 tests passing).
+
+## [1.1.5-prod] - 2026-11-07
+### Enhanced
+- **Collaborative CRDT Wiki Documentation**: Updated `USER_MANUAL.md` with complete documentation for the decentralized CRDT Subreddit Wiki, detailing LWW registers, Lamport logical clocks, deterministic peer tie-breaking, and LWW moderator sets.
+- **Sidecar Build Pipeline Documentation**: Added architecture and deployment guides in `USER_MANUAL.md` and `DEPLOY.md` detailing cross-compilation triples, symbol stripping, and Tauri v2 dual-location staging.
+- **Sidecar Build Matrix Hardening**: Updated `scripts/build_sidecar_matrix.sh` with supported matrix validation, empty binary verification, and SHA-256 checksum generation for verifiable builds.
+
+## [1.1.4-prod] - 2026-11-04
+### Added
+- **Cross-Platform Sidecar Matrix Automation**: Created `scripts/build_sidecar_matrix.sh` automating target triple mapping, compiler flags, and dual-location staging (`src-tauri/bin/` and `src-tauri/`) for Tauri v2.
+- **Subreddit Collaborative Editing CRDT**: Implemented state-based Conflict-Free Replicated Data Type (`SubredditCRDTDoc`) in `src/services/crdt.ts` with Last-Write-Wins (LWW) element registers, Lamport logical clocks, and deterministic tie-breaking.
+- **Subreddit Wiki UI**: Added `SubredditWikiTab` component in `src/components/SubredditWikiTab.tsx` providing real-time local commit, state export, and peer CRDT state merging.
+- **Automated Sidecar Deployment Pipeline**: Integrated matrix target triple build into `.github/workflows/release.yml` with Ubuntu 22.04 runner, WebKitGTK 4.1, and Ayatana AppIndicator libraries.
+- **Crypto Signature Disambiguation**: Resolved duplicate identifier conflicts between hex signature verification (`VerifyHexSignature`) and DAO base64 vote verification.
+
 ## [1.1.3-prod] - 2026-06-18
 ### Added
 - **Media Player**: Integrated a MySpace-style background audio player into the sovereign profile preview.
