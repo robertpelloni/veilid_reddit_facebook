@@ -4,9 +4,15 @@ A prototype desktop social app in the shape of "Reddit meets MySpace" — thread
 
 ## Status
 
-**Active staging prototype, agent-driven development.** Last significant activity: **2026-11-12** — merge of the Tauri v2 sidecar pipeline branch (Protocol #281). Nov 9–11 work added a browser-only fallback client, network mode indicators, sidecar build automation, and CRDT collaborative wiki documentation.
+**Active staging prototype, agent-driven development. Current version: `1.1.6-prod` (`VERSION.md`, synced in `package.json`).** Last significant activity: **2026-11-15** — reconcile of the jules-scaffold branch into main (Protocol #300, v1.1.6-prod superset), after the 2026-11-12 merge of the Tauri v2 sidecar pipeline branch (Protocol #281). Nov 9–11 work added a browser-only fallback client, network mode indicators, sidecar build automation, and CRDT collaborative wiki documentation.
 
-Not a launched decentralized social network. Version numbers in the repo disagree: `package.json` says `1.1.0-prod`, `VERSION.md` says `1.1.3-prod`, and the Nov 11 commit is tagged `v1.1.6-prod`. There are no GitHub releases attached to the repo, and no license file despite the old README's "open-source" framing — treat the version labels as agent-era staging names, not shipped releases.
+Not a launched decentralized social network. There are no GitHub releases attached to the repo, and no license file despite the old README's "open-source" framing — treat the version label as an agent-era staging name, not a shipped release.
+
+**What is NOT proven — read this before believing the rest:**
+- No real peer-to-peer post, profile, or message has been demonstrated between two machines over Veilid. The P2P feature set is design + integration scaffolding, not a verified network.
+- The browser client (`BrowserVeilidClient`) is a **simulation**: it stores data in browser localStorage and does not talk to Veilid at all.
+- The Go Veilid client (`src-tauri/background/client/veilid_client.go`) is an **unverified hand-rolled JSON-RPC stub** to an external daemon at `http://localhost:5959`. Nothing in this repo vendors, starts, or proves that daemon or its RPC interface.
+- Media references returned by the sidecar are **local mock-media references** (a SHA-256 of the payload, stored in local SQLite), not IPFS hashes. The sidecar's `-encrypt-key` flag is simulated and ignored — it does not encrypt the database.
 
 ## What is actually here
 

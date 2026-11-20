@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserVeilidClient } from '../services/browser_veilid';
+import { API_BASE } from '../config';
 
 export const NetworkStatus: React.FC = () => {
   const [status, setStatus] = useState<any>(null);
@@ -8,7 +9,7 @@ export const NetworkStatus: React.FC = () => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const resp = await fetch('http://127.0.0.1:1337/status');
+        const resp = await fetch(`${API_BASE}/status`);
         if (resp.ok) {
           setStatus(await resp.json());
           setIsBrowserFallback(false);
@@ -31,7 +32,7 @@ export const NetworkStatus: React.FC = () => {
     <div className="flex items-center gap-3 text-[10px] text-gray-500 font-mono">
       <div
         className="flex items-center gap-1.5 cursor-help"
-        title={isBrowserFallback ? "Running in Browser-Only WebClient Mode (Simulated P2P WebCrypto Fallback)" : "Connected to Native Go Veilid Daemon on 127.0.0.1:1337"}
+        title={isBrowserFallback ? "Running in Browser-Only WebClient Mode (Simulated P2P WebCrypto Fallback)" : `Connected to local Go sidecar on ${API_BASE} (Veilid network itself is unverified)`}
       >
         <div className={`w-2 h-2 rounded-full animate-pulse ${isBrowserFallback ? 'bg-amber-500' : 'bg-green-500'}`}></div>
         <span className="font-semibold text-gray-700">

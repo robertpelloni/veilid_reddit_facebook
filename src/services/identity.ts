@@ -1,3 +1,4 @@
+import { API_BASE } from '../config';
 export interface SovereignIdentity {
   username: string;
   dht_key: string;
@@ -13,7 +14,7 @@ export class IdentityVault {
    * Generates a new sovereign identity.
    */
   static async generate(username: string): Promise<SovereignIdentity> {
-    const response = await fetch('http://127.0.0.1:1337/identity/generate', { method: 'POST' });
+    const response = await fetch(`${API_BASE}/identity/generate`, { method: 'POST' });
     if (!response.ok) throw new Error("Secure generation failed");
     const data = await response.json();
 

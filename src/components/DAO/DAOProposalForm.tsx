@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Send, X } from 'lucide-react';
+import { API_BASE } from '../../config';
 
 interface ProposalFormProps {
   proposerId: string;
@@ -16,7 +17,7 @@ export const DAOProposalForm: React.FC<ProposalFormProps> = ({ proposerId, onSuc
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await fetch('http://127.0.0.1:1337/dao/proposals', {
+      const response = await fetch(`${API_BASE}/dao/proposals`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

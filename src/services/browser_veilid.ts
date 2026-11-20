@@ -64,24 +64,53 @@ export class BrowserVeilidClient {
    * Generates a 32-byte cryptographically secure identity pair using WebCrypto.
    */
   static async generateIdentity(): Promise<BrowserVeilidIdentity> {
-    const rawKey = new Uint8Array(32);
-    crypto.getRandomValues(rawKey);
-    const dhtKey = Array.from(rawKey)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
-
+    // SIMULATED identity — not a Veilid identity.
+    // The private key is 32 random bytes. The DHT key below is
+    // SHA-256(private key), and the mnemonic is a deterministic
+    // encoding of the first 12 private-key bytes using the local
+    // word list below. Neither is a Veilid Ed25519 public key, and
+    // the mnemonic is NOT BIP39 and cannot recover a real Veilid
+    // identity. Earlier versions returned the same fixed mnemonic
+    // ("alpha bravo charlie ...") for every identity and a DHT key
+    // unrelated to the private key — both are fixed here so the
+    // three values at least belong to each other, locally.
     const privKeyBytes = new Uint8Array(32);
     crypto.getRandomValues(privKeyBytes);
-    const privateKey = Array.from(privKeyBytes)
-      .map((b) => b.toString(16).padStart(2, '0'))
-      .join('');
+    const toHex = (bytes: Uint8Array) =>
+      Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('');
+    const privateKey = toHex(privKeyBytes);
 
-    // Generate a simple 12-word mnemonic mock
+    let dhtKey: string;
+    if (crypto.subtle) {
+      const digest = await crypto.subtle.digest('SHA-256', privKeyBytes);
+      dhtKey = toHex(new Uint8Array(digest));
+    } else {
+      // Non-WebCrypto fallback (tests / older runtimes): a plain
+      // FNV-1a expansion. Still deterministic from the private key,
+      // still simulated — not cryptographic.
+      const out = new Uint8Array(32);
+      let h = 0x811c9dc5;
+      for (let i = 0; i < 32; i++) {
+        h ^= privKeyBytes[i % privKeyBytes.length] + i;
+        h = Math.imul(h, 0x01000193) >>> 0;
+        out[i] = h & 0xff;
+      }
+      dhtKey = toHex(out);
+    }
+
     const mnemonicWords = [
-      'alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot',
-      'golf', 'hotel', 'india', 'juliet', 'kilo', 'lima'
+      'anchor', 'basket', 'candle', 'dagger', 'ember', 'falcon', 'garden', 'harbor',
+      'island', 'jacket', 'kettle', 'ladder', 'magnet', 'needle', 'orchard', 'paddle',
+      'quarry', 'ribbon', 'saddle', 'timber', 'umbrella', 'valley', 'walnut', 'yellow',
+      'zephyr', 'breeze', 'copper', 'desert', 'engine', 'forest', 'glacier', 'hammer',
+      'ivory', 'jungle', 'kitten', 'lemon', 'marble', 'napkin', 'ocean', 'piano',
+      'quilt', 'rocket', 'silver', 'tulip', 'urban', 'violet', 'window', 'xenon',
+      'yonder', 'zebra', 'atlas', 'birch', 'cedar', 'delta', 'eagle', 'flint',
+      'granite', 'heron', 'indigo', 'jasper', 'koala', 'lotus', 'meadow', 'north',
     ];
-    const mnemonic = mnemonicWords.join(' ');
+    const mnemonic = Array.from(privKeyBytes.slice(0, 12))
+      .map((b) => mnemonicWords[b % mnemonicWords.length])
+      .join(' ');
 
     return {
       dht_key: dhtKey,

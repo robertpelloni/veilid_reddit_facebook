@@ -1,7 +1,7 @@
 # TODO.md
 
 ## Post-1.1.0 Refinement
-- [x] Refactor `src/main.tsx` into modular React hooks.
+- [ ] Refactor `src/main.tsx` into modular React hooks. — NOT DONE: `main.tsx` is still a 451-line monolith (some hooks were extracted to `src/hooks/`, the main file was not refactored).
 - [x] Add unit tests for `FeedAggregator` service.
 - [x] Implement "Identity Export" UI for Routing Pair backup.
 
