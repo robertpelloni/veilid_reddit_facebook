@@ -22,3 +22,8 @@ Thumbs.db
 release/
 mobile/
 my_space_mobile/
+
+# Committed artifacts removed 2026-11-19 — do not re-commit
+/staging_sidecar_bin
+*.sqlite
+src-tauri/background/lattice.sqlite

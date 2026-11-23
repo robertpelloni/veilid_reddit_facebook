@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { UploadCloud } from 'lucide-react';
+import { API_BASE } from '../config';
 
 interface ProfileEditorProps {
   onSave: (username: string, css: string, html: string) => void;
@@ -22,7 +23,7 @@ export const ProfileEditor: React.FC<ProfileEditorProps> = ({ onSave, isSaving }
       reader.readAsDataURL(file);
       reader.onload = async () => {
         const base64Data = reader.result as string;
-        const response = await fetch('http://127.0.0.1:1337/media/upload', {
+        const response = await fetch(`${API_BASE}/media/upload`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ base64_data: base64Data })

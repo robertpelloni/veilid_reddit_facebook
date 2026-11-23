@@ -16,6 +16,7 @@ import { useDAOProposals } from './hooks/useDAOProposals';
 import { Top8Friends } from './components/Top8Friends';
 import { MediaPlayer } from './components/MediaPlayer';
 import { signVotePayload } from './services/cryptoSignature';
+import { API_BASE } from './config';
 
 const aggregator = new FeedAggregator();
 const DEV_FEEDBACK_KEY = 'vld_key_feedback_official_v1';
@@ -60,7 +61,7 @@ const App = () => {
     // Attempt to fetch and view the profile of the key we just subscribed to
     try {
       setFeedbackStatus('Fetching profile...');
-      const response = await fetch(`http://127.0.0.1:1337/fetch?key=${newKey}`);
+      const response = await fetch(`${API_BASE}/fetch?key=${newKey}`);
       if (!response.ok) throw new Error('Fetch failed');
       const data = await response.json();
 
@@ -84,7 +85,7 @@ const App = () => {
     if (!feedback || !identity) return;
     setFeedbackStatus('Sending P2P feedback...');
     try {
-        await fetch('http://127.0.0.1:1337/message/send', {
+        await fetch(`${API_BASE}/message/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -111,7 +112,7 @@ const App = () => {
         // Create a unique key for this post's data (comments/body)
         const postKey = `vld_post_${Date.now()}_${identity.dht_key.substring(0, 8)}`;
 
-        await fetch('http://127.0.0.1:1337/posts/create', {
+        await fetch(`${API_BASE}/posts/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -130,7 +131,7 @@ const App = () => {
     setIsSavingProfile(true);
     console.log('Publishing profile for:', username);
     try {
-      const response = await fetch('http://127.0.0.1:1337/publish', {
+      const response = await fetch(`${API_BASE}/publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -152,7 +153,7 @@ const App = () => {
       }
 
       // Automatically register for discovery
-      await fetch('http://127.0.0.1:1337/register', {
+      await fetch(`${API_BASE}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dht_key: data.dht_key, username })
@@ -178,7 +179,7 @@ const App = () => {
         // Cryptographic voting: Generate signature for the vote payload
         const signature = await signVotePayload(id, identity.dht_key, weight, identity.private_key);
 
-        await fetch('http://127.0.0.1:1337/dao/vote', {
+        await fetch(`${API_BASE}/dao/vote`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

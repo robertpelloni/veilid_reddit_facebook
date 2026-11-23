@@ -1,5 +1,13 @@
 # VISION.md
 
+> **ASPIRATIONAL — NOT IMPLEMENTED.** Everything below is the goal this
+> prototype is aiming at, not a description of what exists today.
+> Today: a local-first React/Tauri UI, a Go sidecar with SQLite, a
+> simulated browser client, and an unverified Veilid RPC stub.
+> No decentralized, serverless, uncensorable network has been
+> demonstrated. Do not cite this file as capability — see README.md
+> "What is NOT proven" and ROADMAP.md for verified status.
+
 ## Ultimate Goal
 To create a completely decentralized, serverless social network that empowers users with total data ownership and un-censorable communication. By leveraging the Veilid P2P protocol, we aim to provide a platform that combines the community-driven content aggregation of Reddit with the hyper-personal expression of MySpace.
 

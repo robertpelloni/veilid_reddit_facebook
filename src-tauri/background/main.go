@@ -41,12 +41,12 @@ func main() {
 	var isTestnet bool
 	flag.StringVar(&dataDir, "data-dir", ".", "Directory for SQLite database and cache")
 	flag.StringVar(&port, "port", DefaultSidecarPort, "Port for the sidecar HTTP API")
-	flag.StringVar(&encryptKey, "encrypt-key", "", "Master key for database encryption (Simulated)")
+	flag.StringVar(&encryptKey, "encrypt-key", "", "NOT IMPLEMENTED: simulated database-encryption flag, ignored")
 	flag.BoolVar(&isTestnet, "testnet", false, "Enable testnet mode with isolated protocol string")
 	flag.Parse()
 
 	if encryptKey != "" {
-		fmt.Println("Database encryption enabled.")
+		fmt.Println("WARNING: -encrypt-key is simulated and ignored — database encryption is NOT implemented.")
 	}
 
 	dbPath := filepath.Join(dataDir, "veilid_cache.db")
@@ -466,13 +466,16 @@ func (s *AppState) handleMediaUpload(w http.ResponseWriter, r *http.Request) {
 	}
 	mediaKeyHex := hex.EncodeToString(mediaKey)
 
-	// Prototype: Generate a deterministic mock IPFS hash based on SHA-256 of the plain data
+	// Local mock-media reference ONLY — not IPFS. The identifier is a
+	// deterministic SHA-256 of the plain data, and the payload is stored
+	// in local SQLite. Nothing is uploaded to IPFS or any other network.
 	hashBytes := sha256.Sum256([]byte(req.Base64Data))
 	hashString := hex.EncodeToString(hashBytes[:])
 
-	// Append the hex key to the hash URL so it travels alongside the reference and isn't stored in plain DB
-	// Standard practice for Hypercore/IPFS decryption proxies
-	ipfsURI := fmt.Sprintf("ipfs://Qm%s_%s", hashString[:44], mediaKeyHex)
+	// Append the hex key to the reference so it travels alongside it and
+	// isn't stored in the plain DB. The scheme is deliberately
+	// "mock-media://" so no caller can mistake this for an IPFS CID.
+	mockMediaURI := fmt.Sprintf("mock-media://sha256-%s_%s", hashString[:44], mediaKeyHex)
 
 	// Encrypt the payload using the generated AES-GCM key
 	encryptedPayload, err := encryptMedia([]byte(req.Base64Data), mediaKey)
@@ -481,8 +484,9 @@ func (s *AppState) handleMediaUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Store locally as prototype Encrypted Media chunk. Note we only store the hashString as the primary key, NOT the key.
-	storageHash := fmt.Sprintf("ipfs://Qm%s", hashString[:44])
+	// Store locally as an AES-GCM encrypted media chunk. Note we only store
+	// the mock-media reference as the primary key, NOT the key.
+	storageHash := fmt.Sprintf("mock-media://sha256-%s", hashString[:44])
 	if err := s.Storage.SaveMedia(storageHash, encryptedPayload); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -490,7 +494,7 @@ func (s *AppState) handleMediaUpload(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
-		"url": ipfsURI,
+		"url": mockMediaURI,
 	})
 }
 
@@ -500,7 +504,9 @@ func (s *AppState) handleMediaGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Extract hash from URL query parameter 'url' (e.g., ipfs://Qm..._key)
+	// Extract hash from URL query parameter 'url' (e.g., mock-media://sha256-..._key).
+	// Older local prototypes used an "ipfs://Qm..." prefix for the same
+	// local storage key; GetMedia is scheme-agnostic, it only splits on "_".
 	fullUrl := r.URL.Query().Get("url")
 	if fullUrl == "" {
 		http.Error(w, "Missing media URL", http.StatusBadRequest)

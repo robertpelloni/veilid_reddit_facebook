@@ -1,3 +1,4 @@
+import { API_BASE } from '../config';
 interface PostHeader {
   post_id: string;
   author_id: string;
@@ -8,7 +9,7 @@ interface PostHeader {
 
 export class FeedAggregator {
   private subscribedKeys: string[] = [];
-  private baseUrl = 'http://127.0.0.1:1337';
+  private baseUrl = API_BASE;
 
   constructor() {
     const saved = localStorage.getItem('subscribed_keys');
